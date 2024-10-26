@@ -99,7 +99,7 @@ function NOTFEN({ event }) {
         {Object.keys(eventDetails).length > 0 && (
           <div className="mt-4 text-center">
             <h3 className="text-2xl font-bold text-gray-500">Event Details:</h3>
-            <p className="text-3xl font-semibold mt-4 text-blue-500">
+            <p className="text-xl font-semibold mt-4 text-blue-500">
               {eventDetails.White || 'N/A'} vs {eventDetails.Black || 'N/A'}
             </p>
             <p className="text-md mt-4 text-2xl font-semibold">

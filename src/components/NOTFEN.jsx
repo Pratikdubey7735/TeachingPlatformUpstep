@@ -102,13 +102,13 @@ function NOTFEN({ event }) {
             <p className="text-xl font-semibold mt-4 text-blue-500">
               {eventDetails.White || 'N/A'} vs {eventDetails.Black || 'N/A'}
             </p>
-            <p className="text-md mt-4 text-2xl font-semibold">
+            <p className="text-xl mt-4 text-2xl font-semibold">
               Annotator: {eventDetails.Annotator || 'N/A'}
             </p>
             <hr className="my-4 border-gray-400" />     
           </div>
         )}
-          <h3 className="text-lg font-bold mb-2">Game Details:</h3>
+          <h3 className="text-xl font-bold mb-2">Game Details:</h3>
           <pre className="whitespace-pre-wrap">{event}</pre>
         </div>
       </div>

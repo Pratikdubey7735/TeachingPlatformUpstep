@@ -1,13 +1,13 @@
 // src/App.jsx
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import Login from "./components/Login";
-import Setup from "./components/setup";
-import Navbar from "./components/Navbar";
+import Home from "./Pages/Home.jsx";
+import Dashboard from "./Pages/Dashboard.jsx";
+import Login from "./components/Login.jsx";
+import Setup from "./components/setup.jsx";
+import Navbar from "./components/Navbar.jsx";
 import { AuthProvider } from "./context/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 function App() {
   return (
     <AuthProvider>

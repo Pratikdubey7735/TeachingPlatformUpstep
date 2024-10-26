@@ -80,7 +80,7 @@ function NOTFEN({ event }) {
       <div className="flex-1 flex flex-col items-center bg-green-300 justify-center p-4 border-8 border-gray-400 rounded-lg mr-2 h-auto">
         {event && (
           <div className="w-full p-1">
-            <div className="bg-gray-100 items-center rounded-lg shadow-lg">
+            <div className="bg-gray-100 items-center rounded-lg shadow-lg large-chess-text">
               <ChessAnalysisBoard
                 style={{ width: "950px" }}
                 pgnString={event}

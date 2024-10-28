@@ -80,38 +80,37 @@ function NOTFEN({ event }) {
       <div className="flex-1 flex flex-col items-center bg-green-300 justify-center p-4 border-8 border-gray-400 rounded-lg mr-2 h-auto">
         {event && (
           <div className="w-full p-1">
-            <div className="bg-gray-100 items-center rounded-lg shadow-lg ">
-              <div classname="large-chess-text">
+            <div className="bg-gray-100 items-center rounded-lg shadow-lg">
+             <div className='large-chess-text book-antiqua p-7'>
               <ChessAnalysisBoard
                 style={{ width: "950px" }}
                 pgnString={event}
                 customArrowColor={arrowColor}
                 customSquareStyles={renderHighlightedSquares()}
                 onSquareClick={handleMouseClick}
-              />
-                <div/>
+              /></div> 
             </div>
           </div>
         )}
       </div>
 
       {/* Right Side: Event Details and Raw Event Display */}
-      <div className="flex-1 flex flex-col items-center justify-start p-4 rounded-lg ml-2 h-auto overflow-auto max-h-[690px] border-8 border-blue-400">
-        <div className="w-full bg-gray-100 p-2 rounded-lg shadow-lg">
+      <div className="flex-1 flex flex-col items-center justify-start p-4 rounded-lg ml-2 h-auto overflow-auto max-h-[750px] border-8 border-blue-400">
+        <div className="w-auto bg-gray-100 p-2 rounded-lg shadow-lg">
         {Object.keys(eventDetails).length > 0 && (
           <div className="mt-4 text-center">
-            <h3 className="text-2xl font-bold text-gray-500">Event Details:</h3>
-            <p className="text-xl font-semibold mt-4 text-blue-500">
+            <h3 className="text-4xl font-bold text-gray-500">Event Details:</h3>
+            <p className="text-3xl font-semibold mt-4 text-blue-500">
               {eventDetails.White || 'N/A'} vs {eventDetails.Black || 'N/A'}
             </p>
-            <p className="text-xl mt-4 font-semibold">
+            <p className="text-md mt-4 text-2xl font-semibold">
               Annotator: {eventDetails.Annotator || 'N/A'}
             </p>
             <hr className="my-4 border-gray-400" />     
           </div>
         )}
-          <h3 className="text-xl font-bold mb-2">Game Details:</h3>
-          <pre className="whitespace-pre-wrap">{event}</pre>
+          <h3 className="text-lg font-bold mb-2">Game Details:</h3>
+          <pre className="whitespace-pre-wrap select-none">{event}</pre>
         </div>
       </div>
     </div>

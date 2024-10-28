@@ -81,7 +81,7 @@ function NOTFEN({ event }) {
         {event && (
           <div className="w-full p-1">
             <div className="bg-gray-100 items-center rounded-lg shadow-lg">
-             <div className='large-chess-text book-antiqua p-7'>
+             <div className='large-chess-text book-antiqua p-2'>
               <ChessAnalysisBoard
                 style={{ width: "950px" }}
                 pgnString={event}

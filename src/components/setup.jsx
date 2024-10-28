@@ -146,6 +146,8 @@ const Upload = () => {
               <option value="AdvanPart1Home">Advance Part-1 Homework</option>
               <option value="AdvancePart2Class">Advance Part-2 Classwork</option>
               <option value="AdvPArt2Home">Advance Part-2 Homework</option>
+              <option value="Jr1">Junior Part-1</option>
+              <option value="Jr2">Junior Part-2</option>
             </select>
             <h2 className="text-2xl font-semibold mb-4">Select Chapter</h2>
             <select

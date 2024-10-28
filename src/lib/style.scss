@@ -24,7 +24,7 @@
   margin-top: 4px;
  margin-left: 8px;
  margin-bottom: 5px;
-  
+
 }
 
 .RCAB-analysis-board-container {
@@ -34,26 +34,32 @@
   margin: 2px;
   padding: 5px;
   gap: 5px;
-  
 }
 .RCAB-analysis-board-container>div>:nth-child(2) {
   border: solid 8px gray;
   margin-left: 10px;
-  font-size:90px !important; 
-  color:yellow;
+  
 }
 
 .RCAB-moves-container {
-  padding: 36px;
-  width: 15vw;
+  width: 20vw;
+  padding: 4px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 2px !important;
+  color:red ;
   height: 100% ;
   overflow-y: auto;
   max-height:570px;
   border: 4px solid burlywood;
 }
+
 .large-chess-text * {
-  font-size:24px !important;
-  font-weight:bold;
+  font-size: 20px !important; 
+  color:black !important;
+  // Scale this up as needed
+}
+
+.book-antiqua{
+  font-family: 'Book Antiqua', serif;
+  padding: 2px;
 }

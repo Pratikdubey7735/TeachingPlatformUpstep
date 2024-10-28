@@ -15,6 +15,9 @@ function FEN({ event }) {
   const [blackPlayer, setBlackPlayer] = useState('');
   const [annotator, setAnnotator] = useState('');
   const [specificComment, setSpecificComment] = useState('');
+  
+  // New state to manage the visibility of moves
+  const [movesVisible, setMovesVisible] = useState(true); // Initially, moves are visible
 
   // Initialize a new game if not already set
   useEffect(() => {
@@ -35,16 +38,13 @@ function FEN({ event }) {
         const fen = fenMatch[1];
         const newGame = new Chess(fen);
         setGame(newGame);
-        updateMovesHistory(newGame);
       }
 
-      // Extract event title
       const titleMatch = event.match(/\[Event "([^"]+)"\]/);
       if (titleMatch && titleMatch[1]) {
         setEventTitle(titleMatch[1]);
       }
 
-      // Extract player names
       const whiteMatch = event.match(/\[White "([^"]+)"\]/);
       if (whiteMatch && whiteMatch[1]) {
         setWhitePlayer(whiteMatch[1]);
@@ -54,18 +54,27 @@ function FEN({ event }) {
         setBlackPlayer(blackMatch[1]);
       }
 
-      // Extract annotator
       const annotatorMatch = event.match(/\[Annotator "([^"]+)"\]/);
       if (annotatorMatch && annotatorMatch[1]) {
         setAnnotator(annotatorMatch[1]);
       }
 
-      // Extract specific comment
       const specificCommentMatch = event.match(/\{([^}]+)\}/);
       if (specificCommentMatch && specificCommentMatch[1]) {
         setSpecificComment(specificCommentMatch[1]);
       } else {
-        setSpecificComment('White to play and do a good exchange...');
+        setSpecificComment('');
+      }
+
+      // Extract moves while ignoring content inside square brackets []
+      const movesMatch = event.match(/(\d+\.\s*[^\[\]]+)/g);
+      if (movesMatch) {
+        const formattedMoves = movesMatch.map((move, index) => (
+          <li key={index} className="text-lg">
+            {move.trim()}
+          </li>
+        ));
+        setMovesHistory(formattedMoves);
       }
     }
   }, [event]);
@@ -87,26 +96,6 @@ function FEN({ event }) {
     return true;
   }
 
-  function updateMovesHistory(currentGame) {
-    if (!currentGame) return;
-    const history = currentGame.history({ verbose: true });
-    const formattedMoves = history.reduce((moves, move, index) => {
-      const moveNumber = Math.floor(index / 2) + 1;
-      const isWhiteMove = index % 2 === 0;
-      const moveText = isWhiteMove ? `${moveNumber}) ${move.san}` : move.san;
-  
-      if (isWhiteMove) {
-        moves.push(moveText);
-      } else {
-        moves[moves.length - 1] += ` ${move.san}`;
-      }
-  
-      return moves;
-    }, []);
-  
-    setMovesHistory(formattedMoves);
-  }
-
   function onSquareClick(square) {
     setSelectedSquare(square);
     toggleSquareHighlight(square);
@@ -118,12 +107,10 @@ function FEN({ event }) {
         (highlight) => highlight.square === square
       );
 
-      // If the square is already highlighted, remove it
       if (existingHighlight) {
         return prev.filter((highlight) => highlight.square !== square);
       }
 
-      // Otherwise, add a new highlight with the current color
       return [...prev, { square, color: currentHighlightColor }];
     });
   }
@@ -173,11 +160,16 @@ function FEN({ event }) {
     }
   }
 
+  // Function to toggle visibility of moves
+  const toggleMovesVisibility = () => {
+    setMovesVisible((prev) => !prev);
+  };
+
   return (
     <div className="bg-green-200 p-4 rounded-lg shadow-lg mb-4 w-full">
       <h3 className="text-xl font-semibold mb-2 text-center">Event</h3>
       <div className="flex flex-col md:flex-row bg-white p-3 rounded-md shadow-md border border-gray-300">
-        <div className="flex-1 flex items-center justify-center  rounded-lg p-2">
+        <div className="flex-1 flex items-center justify-center rounded-lg p-2">
           {game && (
             <div className="flex items-center justify-center border-8 border-gray-400 h-auto w-full p-2">
               <Chessboard
@@ -211,8 +203,24 @@ function FEN({ event }) {
             </pre>
           </div>
           <button
+            onClick={toggleMovesVisibility}
+            className="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-200"
+          >
+            {movesVisible ? "Hide Moves" : "Show Moves"}
+          </button>
+          {movesVisible && (
+            <>
+              <h2 className="font-semibold mt-4 text-2xl">Moves:</h2>
+              <ul className="list-disc ml-5">
+                {movesHistory.map((move, index) => (
+                  <li key={index} className="text-lg">{move}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          <button
             onClick={resetHighlights}
-            className="mt-4 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition duration-200"
+            className="mt-4 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition duration-200 m-4"
           >
             Reset Highlights
           </button>
@@ -221,5 +229,4 @@ function FEN({ event }) {
     </div>
   );
 }
-
 export default FEN;

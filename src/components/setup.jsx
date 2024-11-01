@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import FEN from "./FEN";
 import NOTFEN from "./NOTFEN";
 
@@ -9,43 +9,28 @@ const Upload = () => {
   const [events, setEvents] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState("");
+  const [expandedLevel, setExpandedLevel] = useState(null);
 
   useEffect(() => {
-    // Fetch PGN files based on selected level
     if (level) {
-      // console.log(`Fetching PGN files from: /api/pgn-files?level=${level}`); // Debugging log
-      fetch(`https://backendteachingplatform.onrender.com/api/pgn-files?level=${level}`)
+      console.log(`Fetching PGN files from: /api/pgn-files?level=${level}`);
+      fetch(`/api/pgn-files?level=${level}`)
         .then((response) => response.json())
         .then((data) => {
           if (Array.isArray(data)) {
-            setPgnFiles(data); // Store the PGNs related to the selected level
+            setPgnFiles(data);
           } else {
             console.error("Expected an array from the response:", data);
-            setPgnFiles([]); // Ensure it's an array
+            setPgnFiles([]);
           }
         })
         .catch((error) => {
           console.error("Error fetching PGN files:", error);
-          setPgnFiles([]); // Ensure it's an array on error
+          setPgnFiles([]);
         });
     }
   }, [level]);
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (isFullscreen && event.key === "Escape") {
-        exitFullscreen();
-      } else if (isFullscreen) {
-        if (event.key === "ArrowDown") handleNext();
-        else if (event.key === "ArrowUp") handlePrevious();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isFullscreen]);
 
   const handleFileSelect = (event) => {
     const selectedUrl = event.target.value;
@@ -68,93 +53,125 @@ const Upload = () => {
     setCurrentIndex(0);
   };
 
-  const handleNext = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex < events.length - 1 ? prevIndex + 1 : prevIndex
-    );
-  };
-
-  const handlePrevious = () => {
-    setCurrentIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : prevIndex));
-  };
-
-  const currentEvent = events[currentIndex] || null;
-  const isFEN = currentEvent ? currentEvent.includes("FEN") : false;
-
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-      } else if (document.documentElement.mozRequestFullScreen) {
-        document.documentElement.mozRequestFullScreen();
-      } else if (document.documentElement.webkitRequestFullscreen) {
-        document.documentElement.webkitRequestFullscreen();
-      } else if (document.documentElement.msRequestFullscreen) {
-        document.documentElement.msRequestFullscreen();
-      }
-      setIsFullscreen(true);
-    }
-  };
-
-  const exitFullscreen = () => {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.mozCancelFullScreen) {
-      document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
-    setIsFullscreen(false);
-  };
-
-  const handleLevelSelect = (event) => {
-    const selectedLevel = event.target.value;
+  const handleLevelSelect = (selectedLevel, label) => {
     setLevel(selectedLevel);
+    setSelectedLabel(label);
     setSelectedFile("");
     setEvents([]);
     setCurrentIndex(0);
-    setPgnFiles([]); // Clear existing PGN files
+    setPgnFiles([]);
+    setExpandedLevel(null); // Close dropdown on selection
+  };
+
+  const levels = {
+    Beginner: [
+      { value: "BeginnerClassworkPGN", label: "Classwork" },
+      { value: "BeginnerHomeworkPGN", label: "Homework" }
+    ],
+    Advanced: [
+      { value: "AdvBegClass", label: "Classwork" },
+      { value: "AdvBegHome", label: "Homework" }
+    ],
+    Intermediate: [
+      { value: "InterClass", label: "Classwork" },
+      { value: "InterHome", label: "Homework" }
+    ],
+    AdvancedPart1: [
+      { value: "AdvanPart1Class", label: "Classwork" },
+      { value: "AdvanPart1Home", label: "Homework" }
+    ],
+    AdvancedPart2: [
+      { value: "AdvancePart2Class", label: "Classwork" },
+      { value: "AdvPArt2Home", label: "Homework" }
+    ],
+    Junior: [
+      { value: "Jr1", label: "Junior Part-1" },
+      { value: "Jr2", label: "Junior Part-2" }
+    ]
+  };
+
+  // Handle keydown for navigation and fullscreen toggle
+  const handleKeyDown = useCallback((event) => {
+    if (isFullscreen) {
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault(); // Prevent scrolling
+        if (event.key === "ArrowUp") {
+          setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+        } else if (event.key === "ArrowDown") {
+          setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, events.length - 1));
+        }
+      } else if (event.key === "Escape") {
+        setIsFullscreen(false);
+        document.exitFullscreen().catch((err) => console.error(err));
+      }
+    }
+  }, [isFullscreen, events.length]);
+  
+  useEffect(() => {
+    if (isFullscreen) {
+      document.addEventListener("keydown", handleKeyDown);
+    } else {
+      document.removeEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFullscreen, handleKeyDown]);
+
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      document.documentElement.requestFullscreen().catch((err) => console.error(err));
+      setIsFullscreen(true);
+    } else {
+      setIsFullscreen(false);
+      document.exitFullscreen().catch((err) => console.error(err));
+    }
   };
 
   return (
-    <div className={`min-h-screen bg-gray-400 p-4 ${isFullscreen ? "fullscreen" : ""}`}>
+    <div className={`min-h-screen bg-gray-200 p-6 ${isFullscreen ? "fullscreen" : ""}`}>
       {isFullscreen ? (
         <div className="flex flex-col items-center justify-center h-screen">
           <div className="bg-white p-6 rounded-lg shadow-lg mb-6 w-full h-full flex items-center justify-center">
-            {currentEvent && (isFEN ? <FEN event={currentEvent} /> : <NOTFEN event={currentEvent} />)}
+            {events[currentIndex] && (events[currentIndex].includes("FEN") ? <FEN event={events[currentIndex]} /> : <NOTFEN event={events[currentIndex]} />)}
           </div>
         </div>
       ) : (
         <div className="w-full">
           <div className="bg-white p-6 rounded-lg shadow-lg mb-6 w-full">
-            <h2 className="text-2xl font-semibold mb-4">Select Level</h2>
-            <select
-              onChange={handleLevelSelect}
-              value={level}
-              className="w-full p-2 border border-gray-300 rounded-md mb-4"
-            >
-              <option value="">-- Select Level --</option>
-              <option value="BeginnerClassworkPGN">Beginner Classwork</option>
-              <option value="BeginnerHomeworkPGN">Beginner Homework</option>
-              <option value="AdvBegClass">Advanced Beginner Classwork</option>
-              <option value="AdvBegHome">Advanced Beginner Homework</option>
-              <option value="InterClass">Intermediate Classwork</option>
-              <option value="InterHome">Intermediate Homework</option>
-              <option value="AdvanPart1Class">Advance Part-1 Classwork</option>
-              <option value="AdvanPart1Home">Advance Part-1 Homework</option>
-              <option value="AdvancePart2Class">Advance Part-2 Classwork</option>
-              <option value="AdvPArt2Home">Advance Part-2 Homework</option>
-              <option value="Jr1">Junior Part-1</option>
-              <option value="Jr2">Junior Part-2</option>
-            </select>
-            <h2 className="text-2xl font-semibold mb-4">Select Chapter</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Select Level</h2>
+            <div className="flex flex-wrap gap-4 mb-4">
+              {Object.keys(levels).map((levelName) => (
+                <div key={levelName} className="relative">
+                  <button
+                    className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${selectedLabel.includes(levelName) ? "bg-green-500" : ""}`}
+                    onClick={() => setExpandedLevel(expandedLevel === levelName ? null : levelName)}
+                  >
+                    {levelName}
+                  </button>
+                  {expandedLevel === levelName && (
+                    <div className="absolute bg-white border border-gray-300 rounded-md shadow-lg z-10 mt-1 w-full">
+                      {levels[levelName].map(({ value, label }) => (
+                        <button
+                          key={value}
+                          onClick={() => handleLevelSelect(value, `${levelName} - ${label}`)}
+                          className="block w-full text-left p-2 hover:bg-gray-400 focus:outline-none"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Select Chapter</h2>
             <select
               onChange={handleFileSelect}
               value={selectedFile}
-              className="w-full p-2 border border-gray-300 rounded-md mb-4"
-              disabled={!pgnFiles.length} // Disable if no PGN files are available
+              className="w-full p-3 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring focus:ring-blue-300"
+              disabled={!pgnFiles.length}
             >
               <option value="">-- Select a PGN File --</option>
               {pgnFiles.map((file) => (
@@ -165,7 +182,7 @@ const Upload = () => {
             </select>
 
             <div className="mb-6 w-full">
-              {currentEvent && (isFEN ? <FEN event={currentEvent} /> : <NOTFEN event={currentEvent} />)}
+              {events[currentIndex] && (events[currentIndex].includes("FEN") ? <FEN event={events[currentIndex]} /> : <NOTFEN event={events[currentIndex]} />)}
             </div>
           </div>
         </div>
@@ -174,7 +191,7 @@ const Upload = () => {
       {!isFullscreen && (
         <button
           onClick={toggleFullscreen}
-          className="p-2 rounded-md bg-green-500 text-white"
+          className="mt-4 p-3 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-300"
         >
           Enter Fullscreen
         </button>

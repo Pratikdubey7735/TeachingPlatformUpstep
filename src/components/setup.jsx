@@ -14,8 +14,8 @@ const Upload = () => {
 
   useEffect(() => {
     if (level) {
-      console.log(`Fetching PGN files from: /api/pgn-files?level=${level}`);
-      fetch(`/api/pgn-files?level=${level}`)
+      console.log(`Fetching PGN files from: https://backendteachingplatform.onrender.com/api/pgn-files?level=${level}`);
+      fetch(`https://backendteachingplatform.onrender.com/api/pgn-files?level=${level}`)
         .then((response) => response.json())
         .then((data) => {
           if (Array.isArray(data)) {

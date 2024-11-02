@@ -17,7 +17,7 @@ function FEN({ event }) {
   const [specificComment, setSpecificComment] = useState('');
   
   // New state to manage the visibility of moves
-  const [movesVisible, setMovesVisible] = useState(true); // Initially, moves are visible
+  const [movesVisible, setMovesVisible] = useState(false); // Initially, moves are not visible
 
   // Initialize a new game if not already set
   useEffect(() => {

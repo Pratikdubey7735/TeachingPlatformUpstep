@@ -85,8 +85,8 @@ const Upload = () => {
       { value: "AdvPArt2Home", label: "Homework" }
     ],
     Junior: [
-      { value: "Jr1", label: "Jr1" },
-      { value: "Jr2", label: "Jr2" }
+      { value: "Jr1C", label: "Jr1" },
+      { value: "Jr2C", label: "Jr2" }
     ]
   };
 

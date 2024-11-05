@@ -68,7 +68,7 @@ const Upload = () => {
       { value: "BeginnerClassworkPGN", label: "Classwork" },
       { value: "BeginnerHomeworkPGN", label: "Homework" }
     ],
-    Advanced: [
+    AdvancedBeginner: [
       { value: "AdvBegClass", label: "Classwork" },
       { value: "AdvBegHome", label: "Homework" }
     ],
@@ -85,8 +85,8 @@ const Upload = () => {
       { value: "AdvPArt2Home", label: "Homework" }
     ],
     Junior: [
-      { value: "Jr1", label: "Junior Part-1" },
-      { value: "Jr2", label: "Junior Part-2" }
+      { value: "Jr1", label: "Jr1" },
+      { value: "Jr2", label: "Jr2" }
     ]
   };
 

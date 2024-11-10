@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
+
 function FEN({ event }) {
   const [game, setGame] = useState(null);
   const [highlightedSquares, setHighlightedSquares] = useState([]);
   const [arrowColor, setArrowColor] = useState("rgba(255, 0, 0, 0.7)");
-  const [currentHighlightColor, setCurrentHighlightColor] = useState(
-    "rgba(255, 0, 0, 0.5)"
-  );
+  const [currentHighlightColor, setCurrentHighlightColor] = useState("rgba(255, 0, 0, 0.5)");
   const [gameOutcome, setGameOutcome] = useState(null);
   const [movesHistory, setMovesHistory] = useState([]);
   const [selectedSquare, setSelectedSquare] = useState(null);
@@ -16,12 +15,16 @@ function FEN({ event }) {
   const [blackPlayer, setBlackPlayer] = useState("");
   const [annotator, setAnnotator] = useState("");
   const [specificComment, setSpecificComment] = useState("");
-  // State to manage visibility of moves and track played moves
   const [movesVisible, setMovesVisible] = useState(false);
-  const [storedMoves, setStoredMoves] = useState([]); // New state for storing moves
-  const [currentMoveIndex, setCurrentMoveIndex] = useState(-1); // Index for the currently played move
+  const [storedMoves, setStoredMoves] = useState([]);
+  const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
+  const [questionVisible, setQuestionVisible] = useState(false);
+  const [boardOrientation, setBoardOrientation] = useState("white");
+  
+  // Resizing states
+  const [leftWidth, setLeftWidth] = useState(50);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Initialize a new game if not already set
   useEffect(() => {
     if (!game) {
       const newGame = new Chess();
@@ -32,7 +35,6 @@ function FEN({ event }) {
     }
   }, [game]);
 
-  // Update game and event info when the 'event' prop changes
   useEffect(() => {
     if (event) {
       const fenMatch = event.match(/FEN "([^"]+)"/);
@@ -69,26 +71,24 @@ function FEN({ event }) {
         setSpecificComment("");
       }
 
-      // Extract moves while ignoring content inside square brackets []
-      // Step 1: Remove all content within {} brackets
       const cleanedEvent = event.replace(/\{[^}]*\}/g, "");
-      // Step 2: Extract lines that do not start with [ ] (metadata)
       const movesMatch = cleanedEvent.match(/^(?!\[).+/gm);
       if (movesMatch) {
         const formattedMoves = movesMatch.map((move) => move.trim());
-        setStoredMoves(formattedMoves); // Store moves locally
-        setMovesHistory(formattedMoves); // Update moves history
+        setStoredMoves(formattedMoves);
+        setMovesHistory(formattedMoves);
       }
     }
   }, [event]);
 
-  const playMove = (move) => {
-    const moveObj = game.move(move);
-    if (moveObj) {
-      setGame(new Chess(game.fen())); // Update game state with new position
-      setCurrentMoveIndex((prevIndex) => prevIndex + 1); // Move index forward
-      determineGameOutcome();
-    }
+  const resetHighlights = () => {
+    setHighlightedSquares([]);
+  };
+
+  const buttonStyle = {
+    margin: "10px",
+    padding: "5px 10px",
+    cursor: "pointer",
   };
 
   useEffect(() => {
@@ -126,6 +126,15 @@ function FEN({ event }) {
     };
   }, [currentMoveIndex, storedMoves]);
 
+  const playMove = (move) => {
+    const moveObj = game.move(move);
+    if (moveObj) {
+      setGame(new Chess(game.fen()));
+      setCurrentMoveIndex((prevIndex) => prevIndex + 1);
+      determineGameOutcome();
+    }
+  };
+
   const onDrop = (source, target) => {
     let move = null;
     setGame((game) => {
@@ -138,7 +147,6 @@ function FEN({ event }) {
       return update;
     });
     if (move === null) return false;
-    updateMovesHistory(game);
     determineGameOutcome();
     return true;
   };
@@ -171,11 +179,13 @@ function FEN({ event }) {
     return highlightedStyles;
   };
 
-  const resetHighlights = () => {
-    setHighlightedSquares([]);
+  const hasValidMoves = movesHistory.some((move) => move !== "*");
+
+  const toggleMovesVisibility = () => {
+    setMovesVisible((prev) => !prev);
   };
 
-  function determineGameOutcome() {
+  const determineGameOutcome = () => {
     if (game && game.in_checkmate()) {
       setGameOutcome("Checkmate!");
     } else if (
@@ -186,59 +196,76 @@ function FEN({ event }) {
     } else {
       setGameOutcome(null);
     }
-  }
-
-  // Check if movesHistory contains valid moves
-  const hasValidMoves = movesHistory.some((move) => move !== "*");
-
-  // Function to toggle visibility of moves
-  const toggleMovesVisibility = () => {
-    setMovesVisible((prev) => !prev);
   };
+
+  const handleMouseDown = () => setIsDragging(true);
+  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const newWidth = (e.clientX / window.innerWidth) * 100;
+    setLeftWidth(Math.min(80, Math.max(20, newWidth))); // Limits width between 20% and 80%
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
 
   return (
     <div className="bg-green-200 p-4 rounded-lg shadow-lg mb-4 w-full">
       <h3 className="text-xl font-semibold mb-2 text-center">Event</h3>
-      <div className="flex flex-col md:flex-row bg-white p-3 rounded-md shadow-md border border-gray-300">
-        <div className="flex-1 flex items-center justify-center rounded-lg p-2">
+      <div className="flex bg-white rounded-md shadow-md border border-gray-300">
+        <div className="flex-none p-2" style={{ width: `${leftWidth}%` }}>
           {game && (
             <div className="flex items-center justify-center border-8 border-gray-400 h-auto w-full p-2">
               <Chessboard
                 position={game.fen()}
                 onPieceDrop={onDrop}
+                boardOrientation={boardOrientation}
                 style={{ width: "750px" }}
                 customArrowColor={arrowColor}
                 customSquareStyles={renderHighlightedSquares()}
                 onSquareClick={onSquareClick}
                 customNotationStyle={{
-                  fontSize: "20px",
-                }}
+                  fontSize: "25px",
+                  fontWeight: "bold",
+                  color: "black",
+                }}                
               />
             </div>
           )}
         </div>
-
+        <div
+          className="flex-none bg-gray-300 w-1 cursor-col-resize"
+          onMouseDown={handleMouseDown}
+        ></div>
         <div className="flex-1 p-4">
-          <h4 className="font-semibold mb-2 text-4xl text-blue-600">
-            Event Details:
-          </h4>
-          <p className="mb-2 text-xl">
-            <strong className="text-2xl font-bold">Topic:</strong> {whitePlayer}{" "}
-            vs {blackPlayer}
+          <h4 className="font-semibold mb-2 text-4xl text-blue-600 select-none">Event Details:</h4>
+          <p className="mb-2 text-xl select-none">
+            <strong className="text-2xl font-bold select-none">Topic:</strong> {whitePlayer} vs {blackPlayer}
           </p>
-          <p className="mb-2 text-xl">
+          <p className="mb-2 text-xl select-none">
             <strong>Annotator:</strong> {annotator}
           </p>
-          <div className="border border-gray-300 rounded-md p-2 mt-4">
-            <h1 className="font-bold mb-2 text-2xl">
-              <strong>Question:</strong>
-            </h1>
-            <pre className="whitespace-pre-wrap text-gray-700 text-xl font-semibold max-w-full break-words overflow-y-auto max-h-60">
-              {specificComment}
-            </pre>
-          </div>
-          {/* Show Moves button and moves history section */}
-          {hasValidMoves && (
+          <button
+            onClick={() => setQuestionVisible((prev) => !prev)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-full mt-4"
+          >
+            {questionVisible ? "Hide Question" : "Show Question"}
+          </button>
+          {questionVisible && (
+            <div className="border border-gray-300 rounded-md p-2 mt-4">
+              <h1 className="font-bold mb-2 text-2xl select-none"><strong>Question:</strong></h1>
+              <pre className="whitespace-pre-wrap text-gray-700 text-xl font-semibold max-w-full break-words overflow-y-auto max-h-60">
+                {specificComment}
+              </pre>
+            </div>
+          )}
+           {hasValidMoves && (
             <div className="mt-4">
               <button
                 className="bg-blue-500 text-white px-4 py-2 rounded-full"
@@ -266,7 +293,17 @@ function FEN({ event }) {
           >
             Reset Highlights
           </button>
+          <button
+            className="bg-blue-500 rounded-2xl text-white"
+            style={buttonStyle}
+            onClick={() =>
+              setBoardOrientation(boardOrientation === "white" ? "black" : "white")
+            }
+          >
+            Flip board 🔁
+          </button>
         </div>
+        
       </div>
     </div>
   );

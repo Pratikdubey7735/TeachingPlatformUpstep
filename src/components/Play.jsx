@@ -13,6 +13,12 @@ function Play() {
   const [movesHistory, setMovesHistory] = useState([]);
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
 
+  useEffect(() => {
+    // Initialize moves history from the current game state
+    setMovesHistory(game.history());
+    setFen(game.fen());
+  }, [game]);
+
   const onDrop = (source, target) => {
     const move = game.move({
       from: source,
@@ -59,28 +65,29 @@ function Play() {
 
   const handleMoveClick = (index) => {
     setCurrentMoveIndex(index + 1);
-    resetGameToMove(index + 1);
+    setFen(getFenForMove(index + 1));
   };
 
-  const resetGameToMove = (moveIndex) => {
-    game.reset();
+  const getFenForMove = (moveIndex) => {
+    // Retrieve the FEN string for a specific move in history
+    const tempGame = new Chess(initialFen);
     for (let i = 0; i < moveIndex; i++) {
-      game.move(movesHistory[i]);
+      tempGame.move(movesHistory[i]);
     }
-    setFen(game.fen());
+    return tempGame.fen();
   };
 
   const handlePreviousMove = () => {
     if (currentMoveIndex > 0) {
       setCurrentMoveIndex(currentMoveIndex - 1);
-      resetGameToMove(currentMoveIndex - 1);
+      setFen(getFenForMove(currentMoveIndex - 1));
     }
   };
 
   const handleNextMove = () => {
     if (currentMoveIndex < movesHistory.length) {
       setCurrentMoveIndex(currentMoveIndex + 1);
-      resetGameToMove(currentMoveIndex + 1);
+      setFen(getFenForMove(currentMoveIndex + 1));
     }
   };
 

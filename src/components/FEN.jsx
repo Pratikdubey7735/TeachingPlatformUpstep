@@ -20,6 +20,7 @@ function FEN({ event }) {
   const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
   const [questionVisible, setQuestionVisible] = useState(false);
   const [boardOrientation, setBoardOrientation] = useState("white");
+  const [promotionPiece, setPromotionPiece] = useState('q');
   
   // Resizing states
   const [leftWidth, setLeftWidth] = useState(50);
@@ -135,14 +136,15 @@ function FEN({ event }) {
     }
   };
 
-  const onDrop = (source, target) => {
+  const onDrop = (source, target, piece) => {
+    const promotion = piece[1]?.toLowerCase() ?? 'q';
     let move = null;
     setGame((game) => {
       const update = { ...game };
       move = update.move({
         from: source,
         to: target,
-        promotion: "q",
+        promotion: promotion,
       });
       return update;
     });
@@ -221,7 +223,7 @@ function FEN({ event }) {
       <div className="flex bg-white rounded-md shadow-md border border-gray-300">
         <div className="flex-none p-2" style={{ width: `${leftWidth}%` }}>
           {game && (
-            <div className="flex items-center justify-center border-8 border-gray-400 h-auto w-full p-2">
+            <div className="flex items-center justify-center border-8 border-gray-400 h-auto w-full ">
               <Chessboard
                 position={game.fen()}
                 onPieceDrop={onDrop}
@@ -303,7 +305,6 @@ function FEN({ event }) {
             Flip board 🔁
           </button>
         </div>
-        
       </div>
     </div>
   );

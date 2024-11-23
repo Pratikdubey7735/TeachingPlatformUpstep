@@ -9,8 +9,8 @@ const DemoComponent = () => {
   const [boardOrientation, setBoardOrientation] = useState("white");
   const [fenPosition, setFenPosition] = useState(game.fen());
   const navigate = useNavigate();
+  const [promotionPiece, setPromotionPiece] = useState("q");
 
-  // Castling rights state
   const [castlingRights, setCastlingRights] = useState({
     whiteKingside: false,
     whiteQueenside: false,
@@ -18,11 +18,12 @@ const DemoComponent = () => {
     blackQueenside: false,
   });
 
-  // Update FEN with castling rights based on selected checkboxes
+  // Add player turn state
+  const [playerTurn, setPlayerTurn] = useState("w");
+
   const handleGoButtonClick = () => {
     let updatedFen = fenPosition;
 
-    // Determine castling rights
     let castlingString = "";
     if (castlingRights.whiteKingside) castlingString += "K";
     if (castlingRights.whiteQueenside) castlingString += "Q";
@@ -30,16 +31,15 @@ const DemoComponent = () => {
     if (castlingRights.blackQueenside) castlingString += "q";
     if (castlingString === "") castlingString = "-";
 
-    // Update FEN to include castling rights
     const fenParts = updatedFen.split(" ");
     fenParts[2] = castlingString;
+    fenParts[1] = playerTurn; // Update active color in FEN
     updatedFen = fenParts.join(" ");
 
     console.log("Current FEN Position with Castling Rights:", updatedFen);
     navigate("/play", { state: { fen: updatedFen } });
   };
 
-  // Handle dropping a piece from the spare container onto the board
   const handleSparePieceDrop = (piece, targetSquare) => {
     const color = piece[0];
     const type = piece[1].toLowerCase();
@@ -52,12 +52,11 @@ const DemoComponent = () => {
     return success;
   };
 
-  // Handle moving a piece within the board
   const handlePieceDrop = (sourceSquare, targetSquare) => {
     const move = game.move({
       from: sourceSquare,
       to: targetSquare,
-      promotion: "q", // Always promote to a queen for simplicity
+      promotion: promotionPiece,
     });
     if (move) {
       setFenPosition(game.fen());
@@ -66,13 +65,11 @@ const DemoComponent = () => {
     return false;
   };
 
-  // Handle removing a piece when dragged off the board
   const handlePieceDropOffBoard = (sourceSquare) => {
     game.remove(sourceSquare);
     setFenPosition(game.fen());
   };
 
-  // Input handler for manually setting the FEN position
   const handleFenInputChange = (e) => {
     const fen = e.target.value;
     const { valid } = game.validate_fen(fen);
@@ -117,7 +114,6 @@ const DemoComponent = () => {
     <div className="bg-slate-500 mt-[-9px]">
       <ChessboardDnDProvider>
         <div style={boardWrapperStyle}>
-          {/* Spare pieces for black */}
           <div
             style={{
               display: "flex",
@@ -130,7 +126,6 @@ const DemoComponent = () => {
               <SparePiece key={piece} piece={piece} width={45} dndId="ManualBoardEditor" />
             ))}
           </div>
-          {/* Chessboard with border */}
           <div
             style={{
               border: "8px solid #FF8C00",
@@ -146,7 +141,7 @@ const DemoComponent = () => {
               id="ManualBoardEditor"
               position={fenPosition}
               boardOrientation={boardOrientation}
-              boardWidth={650}
+              boardWidth={550}
               onSparePieceDrop={handleSparePieceDrop}
               onPieceDrop={handlePieceDrop}
               onPieceDropOffBoard={handlePieceDropOffBoard}
@@ -157,11 +152,11 @@ const DemoComponent = () => {
               }}
               customNotationStyle={{
                 fontSize: "20px",
+                fontWeight: "bold",
+                  color: "black",
               }}
             />
           </div>
-
-          {/* Spare pieces for white */}
           <div
             style={{
               display: "flex",
@@ -175,8 +170,6 @@ const DemoComponent = () => {
             ))}
           </div>
         </div>
-
-        {/* Controls */}
         <div style={{ display: "flex", justifyContent: "center" }}>
           <button
             className="bg-blue-500 rounded-2xl text-white"
@@ -215,9 +208,7 @@ const DemoComponent = () => {
             Go ➡️
           </button>
         </div>
-        
-        {/* Castling checkboxes */}
-        <div className="text-2xl " style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "10px" }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "10px" }} className="text-2xl">
           <label>
             <input
               type="checkbox"
@@ -259,8 +250,20 @@ const DemoComponent = () => {
             Black 0-0-0
           </label>
         </div>
-
-        {/* FEN input */}
+        {/* Add player turn select */}
+        <div style={{ textAlign: "center", marginTop: "10px" }}>
+          <label>
+            Select player turn:{" "}
+            <select
+              value={playerTurn}
+              onChange={(e) => setPlayerTurn(e.target.value)}
+              style={{ padding: "5px", fontSize: "16px" }}
+            >
+              <option value="w">White</option>
+              <option value="b">Black</option>
+            </select>
+          </label>
+        </div>
         <input
           value={fenPosition}
           style={inputStyle}
@@ -271,4 +274,5 @@ const DemoComponent = () => {
     </div>
   );
 };
+
 export default DemoComponent;

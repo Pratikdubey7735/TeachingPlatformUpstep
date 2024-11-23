@@ -72,25 +72,35 @@ const Upload = () => {
   };
 
   const levels = {
-    Beginner: [
+    BeginnerClasswork: [
       { value: "BeginnerClassworkPGN", label: "Classwork" },
-      { value: "BeginnerHomeworkPGN", label: "Homework" }
     ],
-    AdvancedBeginner: [
+    BeginnerHomework: [
+      { value: "BeginnerHomeworkPGN", label: "Homework" },
+    ],
+    AdvancedBeginnerClasswork: [
       { value: "AdvBegClass", label: "Classwork" },
-      { value: "AdvBegHome", label: "Homework" }
     ],
-    Intermediate: [
+    AdvancedBeginnerHomework: [
+      { value: "AdvBegHome", label: "Homework" },
+    ],
+    IntermediateClasswork: [
       { value: "InterClass", label: "Classwork" },
-      { value: "InterHome", label: "Homework" }
     ],
-    AdvancedPart1: [
+    IntermediateHomework: [
+      { value: "InterHome", label: "Homework" },
+    ],
+    AdvancedPart1Classwork: [
       { value: "AdvanPart1Class", label: "Classwork" },
-      { value: "AdvanPart1Home", label: "Homework" }
     ],
-    AdvancedPart2: [
+    AdvancedPart1Homework: [
+      { value: "AdvanPart1Home", label: "Homework" },
+    ],
+    AdvancedPart2Classwork: [
       { value: "AdvancePart2Class", label: "Classwork" },
-      { value: "AdvPart2Home", label: "Homework" }
+    ],
+    AdvancedPart2Homework: [
+      { value: "AdvPart2Home", label: "Homework" },
     ],
     Junior_Classwork: [
       { value: "Jr1C", label: "Jr1" },
@@ -155,24 +165,35 @@ const Upload = () => {
       { value: "Sr10H", label: "Sr10" },
       { value: "Sr11H", label: "Sr11" },
       { value: "Sr12H", label: "Sr11" },
-    ]
+    ],
   };
 
-  const handleKeyDown = useCallback((event) => {
-    if (isFullscreen) {
+  const handlePrevious = () => {
+    setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, events.length - 1));
+  };
+
+  const handleKeyDown = useCallback(
+    (event) => {
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
         event.preventDefault(); // Prevent scrolling
         if (event.key === "ArrowUp") {
           setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
         } else if (event.key === "ArrowDown") {
-          setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, events.length - 1));
+          setCurrentIndex((prevIndex) =>
+            Math.min(prevIndex + 1, events.length - 1)
+          );
         }
       } else if (event.key === "Escape") {
         setIsFullscreen(false);
         document.exitFullscreen().catch((err) => console.error(err));
       }
-    }
-  }, [isFullscreen, events.length]);
+    },
+    [events.length]
+  );
 
   useEffect(() => {
     if (isFullscreen) {
@@ -187,7 +208,9 @@ const Upload = () => {
 
   const toggleFullscreen = () => {
     if (!isFullscreen) {
-      document.documentElement.requestFullscreen().catch((err) => console.error(err));
+      document.documentElement
+        .requestFullscreen()
+        .catch((err) => console.error(err));
       setIsFullscreen(true);
     } else {
       setIsFullscreen(false);
@@ -196,54 +219,140 @@ const Upload = () => {
   };
 
   // Filter levels based on the category selected (Foundation, Masters, or Senior)
-  const filteredLevels = category === "Foundation"
-    ? Object.keys(levels).slice(0, 5) // Only the first 5 levels for Foundation
-    : category === "Masters"
-    ? ["Junior_Classwork", "Junior_Homework", "Sub_Junior_Classwork", "Sub_Junior_Homework"] // Only Junior levels for Masters
-    : ["Senior_Part1_Classwork", "Senior_Part1_Homework", "Senior_Part2_Classwork", "Senior_Part2_Homework"]; // Senior levels for Senior category
+  const filteredLevels =
+    category === "Beginner"
+      ? ["BeginnerClasswork", "BeginnerHomework"] 
+      : category === "AdvancedBeginner"
+      ? ["AdvancedBeginnerClasswork", "AdvancedBeginnerHomework"]
+      : category === "Intermediate"
+      ? ["IntermediateClasswork", "IntermediateHomework"]
+      : category === "AdvancedPart1"
+      ? ["AdvancedPart1Classwork", "AdvancedPart1Homework"]
+      : category === "AdvancedPart2"
+      ? ["AdvancedPart2Classwork", "AdvancedPart2Homework"]
+      : category === "Masters"
+      ? ["Junior_Classwork", "Junior_Homework"] // Only Junior levels for Masters
+      : category === "SubJunior"
+      ? ["Sub_Junior_Classwork", "Sub_Junior_Homework"]
+      : category === "SeniorPart2"
+      ? ["Senior_Part2_Classwork", "Senior_Part2_Homework"]
+      : ["Senior_Part1_Classwork", "Senior_Part1_Homework"]; // Senior levels for Senior category
 
   return (
-    <div className={`min-h-screen bg-gray-200 p-6 ${isFullscreen ? "fullscreen" : ""}`}>
+    <div
+      className={`min-h-screen bg-gray-200 p-6 ${
+        isFullscreen ? "fullscreen" : ""
+      }`}
+    >
       {isFullscreen ? (
         <div className="flex flex-col items-center justify-center h-screen">
           <div className="bg-white p-6 rounded-lg shadow-lg mb-6 w-full h-full flex items-center justify-center">
-            {events[currentIndex] && (events[currentIndex].includes("FEN") ? <FEN event={events[currentIndex]} /> : <NOTFEN event={events[currentIndex]} />)}
+            {events[currentIndex] &&
+              (events[currentIndex].includes("FEN") ? (
+                <FEN event={events[currentIndex]} />
+              ) : (
+                <NOTFEN event={events[currentIndex]} />
+              ))}
           </div>
         </div>
       ) : (
         <div className="w-full">
           <div className="bg-white p-6 rounded-lg shadow-lg mb-6 w-full">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Select Category</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+              Select Category
+            </h2>
             <div className="flex gap-4 mb-4">
               <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${category === "Foundation" ? "bg-green-500" : ""}`}
-                onClick={() => setCategory("Foundation")}
+                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                  category === "Beginner" ? "bg-green-500" : ""
+                }`}
+                onClick={() => setCategory("Beginner")}
               >
-                Foundation
+               Beginner
               </button>
               <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${category === "Masters" ? "bg-green-500" : ""}`}
+                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                  category === "AdvancedBeginner" ? "bg-green-500" : ""
+                }`}
+                onClick={() => setCategory("AdvancedBeginner")}
+              >
+               Advanced Beginner
+              </button>
+              <button
+                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                  category === "Intermediate" ? "bg-green-500" : ""
+                }`}
+                onClick={() => setCategory("Intermediate")}
+              >
+              Intermediate
+              </button>
+              <button
+                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                  category === "AdvancedPart1" ? "bg-green-500" : ""
+                }`}
+                onClick={() => setCategory("AdvancedPart1")}
+              >
+              Advanced Part 1
+              </button>
+              <button
+                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                  category === "AdvancedPart2" ? "bg-green-500" : ""
+                }`}
+                onClick={() => setCategory("AdvancedPart2")}
+              >
+               Advanced Part 2
+              </button>
+              <button
+                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                  category === "SubJunior" ? "bg-green-500" : ""
+                }`}
+                onClick={() => setCategory("SubJunior")}
+              >
+                Sub Junior
+              </button>
+              <button
+                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                  category === "Masters" ? "bg-green-500" : ""
+                }`}
                 onClick={() => setCategory("Masters")}
               >
                 Junior
               </button>
               <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${category === "Senior" ? "bg-green-500" : ""}`}
+                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                  category === "Senior" ? "bg-green-500" : ""
+                }`}
                 onClick={() => setCategory("Senior")}
               >
-                Senior
+                Senior Part 1
+              </button>
+              <button
+                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                  category === "SeniorPart2" ? "bg-green-500" : ""
+                }`}
+                onClick={() => setCategory("SeniorPart2")}
+              >
+                Senior Part 2
               </button>
             </div>
 
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Select Level</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+              Select Level
+            </h2>
             <div className="flex flex-wrap gap-4 mb-4">
               {filteredLevels.map((levelName) => {
-                const levelOptions = levels[levelName] || [];  // Default to an empty array if undefined
+                const levelOptions = levels[levelName] || []; // Default to an empty array if undefined
                 return (
                   <div key={levelName} className="relative">
                     <button
-                      className={`w-45 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${selectedLabel.includes(levelName) ? "bg-green-500" : ""}`}
-                      onClick={() => setExpandedLevel(expandedLevel === levelName ? null : levelName)}
+                      className={`w-45 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                        selectedLabel.includes(levelName) ? "bg-green-500" : ""
+                      }`}
+                      onClick={() =>
+                        setExpandedLevel(
+                          expandedLevel === levelName ? null : levelName
+                        )
+                      }
                     >
                       {levelName}
                     </button>
@@ -252,7 +361,12 @@ const Upload = () => {
                         {levelOptions.map(({ value, label }) => (
                           <button
                             key={value}
-                            onClick={() => handleLevelSelect(value, `${levelName} - ${label}`)}
+                            onClick={() =>
+                              handleLevelSelect(
+                                value,
+                                `${levelName} - ${label}`
+                              )
+                            }
                             className="block w-full text-left p-2 hover:bg-gray-400 focus:outline-none"
                           >
                             {label}
@@ -265,7 +379,9 @@ const Upload = () => {
               })}
             </div>
 
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Select Chapter</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+              Select Chapter
+            </h2>
             <select
               onChange={handleFileSelect}
               value={selectedFile}
@@ -281,19 +397,41 @@ const Upload = () => {
             </select>
 
             <div className="mb-6 w-full">
-              {events[currentIndex] && (events[currentIndex].includes("FEN") ? <FEN event={events[currentIndex]} /> : <NOTFEN event={events[currentIndex]} />)}
+              {events[currentIndex] &&
+                (events[currentIndex].includes("FEN") ? (
+                  <FEN event={events[currentIndex]} />
+                ) : (
+                  <NOTFEN event={events[currentIndex]} />
+                ))}
             </div>
           </div>
         </div>
       )}
 
       {!isFullscreen && (
-        <button
-          onClick={toggleFullscreen}
-          className="mt-4 p-3 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-300"
-        >
-          Enter Fullscreen
-        </button>
+        <>
+          <div className="flex flex-row gap-4 fixed bottom-4 right-20">
+            <button
+              onClick={handlePrevious}
+              className="p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
+            >
+              Previous
+            </button>
+            <button
+              onClick={handleNext}
+              className="p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
+            >
+              Next
+            </button>
+          </div>
+
+          <button
+            onClick={toggleFullscreen}
+            className="mt-4 p-3 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-300"
+          >
+            Enter Fullscreen
+          </button>
+        </>
       )}
 
       <button
@@ -305,5 +443,4 @@ const Upload = () => {
     </div>
   );
 };
-
 export default Upload;

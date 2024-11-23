@@ -12,6 +12,7 @@ function Play() {
   const [gameOutcome, setGameOutcome] = useState(null);
   const [movesHistory, setMovesHistory] = useState([]);
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
+  const [promotionPiece, setPromotionPiece] = useState('q'); // State to store selected promotion piece
 
   useEffect(() => {
     // Initialize moves history from the current game state
@@ -19,12 +20,15 @@ function Play() {
     setFen(game.fen());
   }, [game]);
 
-  const onDrop = (source, target) => {
+  const onDrop = (source, target, piece) => {
+    const promotion = piece[1]?.toLowerCase() ?? 'q'; // Default to queen if no promotion piece is specified
+
     const move = game.move({
       from: source,
       to: target,
-      promotion: 'q',
+      promotion: promotion, // Use selected promotion piece
     });
+
     if (move) {
       setFen(game.fen());
       updateMovesHistory();
@@ -69,7 +73,6 @@ function Play() {
   };
 
   const getFenForMove = (moveIndex) => {
-    // Retrieve the FEN string for a specific move in history
     const tempGame = new Chess(initialFen);
     for (let i = 0; i < moveIndex; i++) {
       tempGame.move(movesHistory[i]);
@@ -95,54 +98,57 @@ function Play() {
 
   return (
     <div className="flex justify-center items-center bg-green-200 p-4 rounded-lg shadow-lg mb-4 w-full">
-      <div className="flex w-full max-w-[1200px] h-full">
+      <div className="grid grid-cols-2 gap-4 w-full h-full">
         {/* Left Part: Chessboard */}
-        <div className="flex-1 p-2">
+        <div className="border-8 border-green-200 p-4 h-full">
           {game && (
-            <div className="flex items-center justify-center border-8 border-gray-400 p-2 rounded-lg w-full">
+            <div className="flex items-center justify-center border-8 border-gray-600 h-auto w-full ">
               <Chessboard
                 position={fen}
                 onPieceDrop={onDrop}
-                style={{ width: "100%", maxWidth: "500px" }}
                 boardOrientation="white"
+                customNotationStyle={{
+                  fontSize: "25px",
+                  fontWeight: "bold",
+                  color: "black",
+                }}
               />
             </div>
           )}
-          {gameOutcome && <p className="text-center font-bold text-lg">{gameOutcome}</p>}
-
-          {/* Move Navigation Buttons */}
-          <div className="flex justify-center space-x-4 mt-4">
-            <button
-              onClick={handlePreviousMove}
-              disabled={currentMoveIndex === 0}
-              className="bg-gray-400 text-white py-1 px-4 rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={handleNextMove}
-              disabled={currentMoveIndex === movesHistory.length}
-              className="bg-gray-400 text-white py-1 px-4 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
         </div>
-
+        
         {/* Right Part: Moves History */}
-        <div className="flex-1 p-4 border-l-4 border-gray-400 bg-white rounded-lg shadow-md overflow-y-auto max-h-[580px]">
-          <h2 className="text-center font-bold text-xl mb-4">Moves History</h2>
-          <ul className="list-none">
-            {formattedMoves.map((move, index) => (
-              <li
-                key={index}
-                className="py-1 border-b border-gray-300 text-xl cursor-pointer"
-                onClick={() => handleMoveClick(index)}
+        <div className="rounded-lg shadow-md h-full flex flex-col">
+          <div className="bg-white flex-1 border-8 border-blue-800 p-4 m-6">
+            <h2 className="text-center font-bold text-xl mb-4">Moves History</h2>
+            <ul className="list-none max-h-[550px] overflow-y-auto">
+              {formattedMoves.map((move, index) => (
+                <li
+                  key={index}
+                  className="py-1 border-b border-gray-300 text-xl cursor-pointer"
+                  onClick={() => handleMoveClick(index)}
+                >
+                  {move.text}
+                </li>
+              ))}
+            </ul>
+            <div className='mt-2'>
+              <button
+                onClick={handlePreviousMove}
+                disabled={currentMoveIndex === 0}
+                className="bg-gray-500 text-white py-1 px-4 rounded disabled:opacity-50 ml-8"
               >
-                {move.text}
-              </li>
-            ))}
-          </ul>
+                Previous
+              </button>
+              <button
+                onClick={handleNextMove}
+                disabled={currentMoveIndex === movesHistory.length}
+                className="bg-gray-500 text-white py-1 px-4 rounded disabled:opacity-50 ml-8"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

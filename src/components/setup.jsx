@@ -156,7 +156,7 @@ const Upload = () => {
       { value: "Sr9C", label: "Sr9" },
       { value: "Sr10C", label: "Sr10" },
       { value: "Sr11C", label: "Sr11" },
-      { value: "Sr12C", label: "Sr11" },
+      { value: "Sr12C", label: "Sr12" },
     ],
     Senior_Part2_Homework: [
       { value: "Sr7H", label: "Sr7" },
@@ -164,7 +164,7 @@ const Upload = () => {
       { value: "Sr9H", label: "Sr9" },
       { value: "Sr10H", label: "Sr10" },
       { value: "Sr11H", label: "Sr11" },
-      { value: "Sr12H", label: "Sr11" },
+      { value: "Sr12H", label: "Sr12" },
     ],
   };
 

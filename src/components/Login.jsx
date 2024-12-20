@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // Adjust the import
+import { useAuth } from "../context/AuthContext";
+
 const mockUsers = [
   { email: "Pratik@gmail.com", password: "Upstep123" },
   { email: "Vinay@gmail.com", password: "Upstep2023" },
@@ -10,23 +11,38 @@ const mockUsers = [
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login, isLoggedIn, logout } = useAuth(); // Use the custom hook
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login, isLoggedIn, logout } = useAuth();
   const navigate = useNavigate();
 
-  function submit(e) {
-    e.preventDefault();
-
-    const userExists = mockUsers.find(
-      (user) => user.email === email && user.password === password
-    );
-
-    if (userExists) {
-      login(userExists.email); // Call login from context
-      navigate("/dashboard"); // Redirect to the dashboard
-    } else {
-      alert("Invalid email or password");
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/dashboard"); // Redirect if already logged in
     }
-  }
+  }, [isLoggedIn, navigate]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setErrorMessage("");
+    setIsLoading(true);
+
+    // Simulate a delay for login process
+    setTimeout(() => {
+      const userExists = mockUsers.find(
+        (user) => user.email === email && user.password === password
+      );
+
+      if (userExists) {
+        login(userExists.email); // Call login from context
+        navigate("/dashboard"); // Redirect to the dashboard
+      } else {
+        setErrorMessage("Invalid email or password");
+      }
+      setIsLoading(false);
+    }, 1000); // Simulating 1-second delay
+  };
 
   return (
     <div
@@ -37,13 +53,16 @@ export default function LoginForm() {
       }}
     >
       <div className="p-10 bg-white bg-opacity-60 rounded-xl shadow-xl transform transition-transform hover:scale-105 duration-300 ease-in-out">
-        <div className="p-8 bg-white bg-opacity-90 rounded-lg shadow-lg transform transition-transform hover:scale-105 duration-300 ease-in-out">
+        <div className="p-8 bg-white bg-opacity-90 rounded-lg shadow-lg">
           <h2 className="text-3xl font-bold text-blue-500 text-center mb-6">
             {isLoggedIn ? "Welcome Back!" : "Login to Your Account"}
           </h2>
 
           {isLoggedIn ? (
             <>
+              <p className="text-center text-lg font-medium mb-4">
+                You are already logged in.
+              </p>
               <button
                 onClick={logout}
                 className="w-full py-3 mb-4 px-6 bg-gradient-to-r from-red-500 via-purple-500 to-pink-500 text-white font-bold rounded-md shadow-lg hover:bg-gradient-to-r hover:from-pink-500 hover:via-purple-500 hover:to-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transform transition-transform hover:scale-105 duration-300 ease-in-out"
@@ -52,17 +71,18 @@ export default function LoginForm() {
               </button>
             </>
           ) : (
-            <form className="space-y-6" onSubmit={submit}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="flex flex-col">
                 <label htmlFor="email" className="text-sm font-semibold text-gray-900">
                   Email
                 </label>
                 <input
-                  type="text"
+                  type="email"
                   name="email"
-                  placeholder="Enter your Email"
-                  className="mt-2 p-3 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 ease-in-out"
+                  placeholder="Enter your email"
+                  value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="mt-2 p-3 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 ease-in-out"
                   required
                 />
               </div>
@@ -75,16 +95,23 @@ export default function LoginForm() {
                   type="password"
                   name="password"
                   placeholder="Enter your password"
-                  className="mt-2 p-3 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 ease-in-out"
+                  value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="mt-2 p-3 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 ease-in-out"
                   required
                 />
               </div>
+
+              {errorMessage && (
+                <p className="text-sm text-red-500 text-center">{errorMessage}</p>
+              )}
+
               <button
                 type="submit"
                 className="w-full py-3 px-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-md shadow-lg hover:bg-gradient-to-r hover:from-pink-500 hover:via-purple-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transform transition-transform hover:scale-105 duration-300 ease-in-out"
+                disabled={isLoading}
               >
-                Login
+                {isLoading ? "Logging in..." : "Login"}
               </button>
             </form>
           )}

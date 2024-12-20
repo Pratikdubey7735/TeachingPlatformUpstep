@@ -1,32 +1,50 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-// Create a context
 const AuthContext = createContext();
 
-// Create a provider component
 export const AuthProvider = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem("user") ? true : false;
+  });
 
-  // Check sessionStorage for login state when the app initializes
+  const [user, setUser] = useState(() => {
+    return localStorage.getItem("user");
+  });
+
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("user");
-    if (storedUser) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(storedUser)); // Parse stored user data
-    }
+    // When a new tab is opened, increment the active tab count
+    let activeTabs = parseInt(localStorage.getItem("activeTabs")) || 0;
+    localStorage.setItem("activeTabs", activeTabs + 1);
+
+    // When a tab is closed, decrement the active tab count
+    const handleBeforeUnload = () => {
+      let activeTabs = parseInt(localStorage.getItem("activeTabs")) || 1;
+      localStorage.setItem("activeTabs", activeTabs - 1);
+
+      // If no more active tabs, log out the user
+      if (activeTabs <= 1) {
+        logout();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, []);
 
-  const login = (userEmail) => {
+  const login = (email) => {
     setIsLoggedIn(true);
-    setUser(userEmail);
-    sessionStorage.setItem("user", JSON.stringify(userEmail)); // Store user data in sessionStorage
+    setUser(email);
+    localStorage.setItem("user", email);
   };
 
   const logout = () => {
     setIsLoggedIn(false);
     setUser(null);
-    sessionStorage.removeItem("user"); // Clear user data from sessionStorage
+    localStorage.removeItem("user");
+    localStorage.removeItem("activeTabs");
   };
 
   return (
@@ -36,9 +54,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Create a custom hook to use the AuthContext
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
-
-export default AuthContext;
+export const useAuth = () => useContext(AuthContext);

@@ -1,3 +1,4 @@
+// App.jsx
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Home from "./Pages/Home";
@@ -9,7 +10,6 @@ import Play from "./components/Play";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-
 function App() {
   return (
     <AuthProvider>
@@ -17,7 +17,6 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        {/* Use ProtectedRoute for protected pages */}
         <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
         <Route path="/setup" element={<ProtectedRoute element={Setup} />} />
         <Route path="/demo" element={<ProtectedRoute element={Demo} />} />

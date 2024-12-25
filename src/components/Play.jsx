@@ -6,143 +6,120 @@ import { useLocation } from 'react-router-dom';
 function Play() {
   const location = useLocation();
   const initialFen = location.state?.fen || 'start';
-
-  const [game] = useState(() => new Chess(initialFen));
+  const [game, setGame] = useState(() => new Chess(initialFen));
   const [fen, setFen] = useState(game.fen());
-  const [gameOutcome, setGameOutcome] = useState(null);
-  const [movesHistory, setMovesHistory] = useState([]);
-  const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
-  const [promotionPiece, setPromotionPiece] = useState('q'); // State to store selected promotion piece
+  const [movementHistory, setMovementHistory] = useState([]);
+  const [presentMoveIndex, setPresentMoveIndex] = useState(0);
+  const [sandboxGame, setSandboxGame] = useState(() => new Chess(initialFen));
+  const [promotionPiece, setPromotionPiece] = useState('q');
 
   useEffect(() => {
-    // Initialize moves history from the current game state
-    setMovesHistory(game.history());
-    setFen(game.fen());
-  }, [game]);
+    setFen(sandboxGame.fen());
+  }, [sandboxGame]);
 
-  const onDrop = (source, target, piece) => {
-    const promotion = piece[1]?.toLowerCase() ?? 'q'; // Default to queen if no promotion piece is specified
-
-    const move = game.move({
+  const onDrop = (source, target) => {
+    const move = sandboxGame.move({
       from: source,
       to: target,
-      promotion: promotion, // Use selected promotion piece
+      promotion: promotionPiece,
     });
 
     if (move) {
-      setFen(game.fen());
-      updateMovesHistory();
-      determineGameOutcome();
+      const updatedHistory = [
+        ...movementHistory.slice(0, presentMoveIndex),
+        move.san,
+      ];
+      setMovementHistory(updatedHistory);
+      setPresentMoveIndex(updatedHistory.length);
+      setFen(sandboxGame.fen());
       return true;
     }
     return false;
   };
 
-  const updateMovesHistory = () => {
-    setMovesHistory(game.history());
-    setCurrentMoveIndex(game.history().length);
-  };
-
-  const determineGameOutcome = () => {
-    if (game.in_checkmate()) {
-      setGameOutcome('Checkmate!');
-    } else if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
-      setGameOutcome('The game is a draw!');
-    } else {
-      setGameOutcome(null);
-    }
-  };
-
-  const formatMoves = () => {
-    const formattedMoves = [];
-    for (let i = 0; i < movesHistory.length; i += 2) {
-      const moveNumber = Math.floor(i / 2) + 1;
-      const whiteMove = movesHistory[i];
-      const blackMove = movesHistory[i + 1] ? movesHistory[i + 1] : '';
-      formattedMoves.push({
-        text: `${moveNumber}. ${whiteMove}   ${blackMove}`,
-        index: i,
-      });
-    }
-    return formattedMoves;
-  };
-
   const handleMoveClick = (index) => {
-    setCurrentMoveIndex(index + 1);
-    setFen(getFenForMove(index + 1));
-  };
-
-  const getFenForMove = (moveIndex) => {
+    setPresentMoveIndex(index + 1);
     const tempGame = new Chess(initialFen);
-    for (let i = 0; i < moveIndex; i++) {
-      tempGame.move(movesHistory[i]);
+    for (let i = 0; i <= index; i++) {
+      tempGame.move(movementHistory[i]);
     }
-    return tempGame.fen();
+    setSandboxGame(tempGame);
   };
 
   const handlePreviousMove = () => {
-    if (currentMoveIndex > 0) {
-      setCurrentMoveIndex(currentMoveIndex - 1);
-      setFen(getFenForMove(currentMoveIndex - 1));
+    if (presentMoveIndex > 0) {
+      handleMoveClick(presentMoveIndex - 2);
     }
   };
 
   const handleNextMove = () => {
-    if (currentMoveIndex < movesHistory.length) {
-      setCurrentMoveIndex(currentMoveIndex + 1);
-      setFen(getFenForMove(currentMoveIndex + 1));
+    if (presentMoveIndex < movementHistory.length) {
+      handleMoveClick(presentMoveIndex);
     }
   };
 
-  const formattedMoves = formatMoves();
+  const hisMovesMoves = () => {
+    const userMoves = [];
+    for (let i = 0; i < movementHistory.length; i += 2) {
+      const moveNumber = Math.floor(i / 2) + 1;
+      const whiteMove = movementHistory[i] || '...';
+      const blackMove = movementHistory[i + 1] || '...';
+      userMoves.push({
+        text: `${moveNumber}. ${whiteMove} ${blackMove}`,
+        index: i,
+      });
+    }
+    return userMoves;
+  };
+
+  const userMoves = hisMovesMoves();
 
   return (
     <div className="flex justify-center items-center bg-green-200 p-4 rounded-lg shadow-lg mb-4 w-full">
       <div className="grid grid-cols-2 gap-4 w-full h-full">
         {/* Left Part: Chessboard */}
         <div className="border-8 border-green-200 p-4 h-full">
-          {game && (
-            <div className="flex items-center justify-center border-8 border-gray-600 h-auto w-full ">
+          {sandboxGame && (
+            <div className="flex items-center justify-center border-8 border-gray-600 h-auto w-full">
               <Chessboard
                 position={fen}
                 onPieceDrop={onDrop}
                 boardOrientation="white"
-                customNotationStyle={{
-                  fontSize: "25px",
-                  fontWeight: "bold",
-                  color: "black",
-                }}
               />
             </div>
           )}
         </div>
-        
+
         {/* Right Part: Moves History */}
         <div className="rounded-lg shadow-md h-full flex flex-col">
           <div className="bg-white flex-1 border-8 border-blue-800 p-4 m-6">
             <h2 className="text-center font-bold text-xl mb-4">Moves History</h2>
             <ul className="list-none max-h-[550px] overflow-y-auto">
-              {formattedMoves.map((move, index) => (
+              {userMoves.map((move, index) => (
                 <li
                   key={index}
-                  className="py-1 border-b border-gray-300 text-xl cursor-pointer"
+                  className={`py-1 border-b border-gray-300 text-xl cursor-pointer ${
+                    index === Math.floor(presentMoveIndex / 2)
+                      ? 'bg-blue-200 font-bold'
+                      : 'hover:bg-gray-200'
+                  }`}
                   onClick={() => handleMoveClick(index)}
                 >
                   {move.text}
                 </li>
               ))}
             </ul>
-            <div className='mt-2'>
+            <div className="mt-2">
               <button
                 onClick={handlePreviousMove}
-                disabled={currentMoveIndex === 0}
+                disabled={presentMoveIndex === 0}
                 className="bg-gray-500 text-white py-1 px-4 rounded disabled:opacity-50 ml-8"
               >
                 Previous
               </button>
               <button
                 onClick={handleNextMove}
-                disabled={currentMoveIndex === movesHistory.length}
+                disabled={presentMoveIndex === movementHistory.length}
                 className="bg-gray-500 text-white py-1 px-4 rounded disabled:opacity-50 ml-8"
               >
                 Next

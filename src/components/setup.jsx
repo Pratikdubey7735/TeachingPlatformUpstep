@@ -262,78 +262,37 @@ const Upload = () => {
               Select Category
             </h2>
             <div className="flex gap-4 mb-4">
-              <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
-                  category === "Beginner" ? "bg-green-500" : ""
-                }`}
-                onClick={() => setCategory("Beginner")}
-              >
-               Beginner
-              </button>
-              <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
-                  category === "AdvancedBeginner" ? "bg-green-500" : ""
-                }`}
-                onClick={() => setCategory("AdvancedBeginner")}
-              >
-               Advanced Beginner
-              </button>
-              <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
-                  category === "Intermediate" ? "bg-green-500" : ""
-                }`}
-                onClick={() => setCategory("Intermediate")}
-              >
-              Intermediate
-              </button>
-              <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
-                  category === "AdvancedPart1" ? "bg-green-500" : ""
-                }`}
-                onClick={() => setCategory("AdvancedPart1")}
-              >
-              Advanced Part 1
-              </button>
-              <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
-                  category === "AdvancedPart2" ? "bg-green-500" : ""
-                }`}
-                onClick={() => setCategory("AdvancedPart2")}
-              >
-               Advanced Part 2
-              </button>
-              <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
-                  category === "SubJunior" ? "bg-green-500" : ""
-                }`}
-                onClick={() => setCategory("SubJunior")}
-              >
-                Sub Junior
-              </button>
-              <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
-                  category === "Masters" ? "bg-green-500" : ""
-                }`}
-                onClick={() => setCategory("Masters")}
-              >
-                Junior
-              </button>
-              <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
-                  category === "Senior" ? "bg-green-500" : ""
-                }`}
-                onClick={() => setCategory("Senior")}
-              >
-                Senior Part 1
-              </button>
-              <button
-                className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
-                  category === "SeniorPart2" ? "bg-green-500" : ""
-                }`}
-                onClick={() => setCategory("SeniorPart2")}
-              >
-                Senior Part 2
-              </button>
+              {[
+                "Beginner",
+                "AdvancedBeginner",
+                "Intermediate",
+                "AdvancedPart1",
+                "AdvancedPart2",
+                "SubJunior",
+                "Masters",
+                "Senior",
+                "SeniorPart2",
+              ].map((cat) => (
+                <a
+                  href={`/category/${cat}`} // Link for right-click functionality
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  key={cat}
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent default for left click
+                    setCategory(cat); // Call your left-click function
+                  }}
+                  onContextMenu={(e) => {
+                    // Allows right-click to work as a link (open in new tab)
+                    e.stopPropagation(); // Prevent interference with other right-click actions
+                  }}
+                  className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
+                    category === cat ? "bg-green-500" : ""
+                  }`}
+                >
+                  {cat.replace(/([A-Z])/g, " $1")} {/* Format category name */}
+                </a>
+              ))}
             </div>
 
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">
@@ -344,33 +303,43 @@ const Upload = () => {
                 const levelOptions = levels[levelName] || []; // Default to an empty array if undefined
                 return (
                   <div key={levelName} className="relative">
-                    <button
+                    <a
+                      href="#"
                       className={`w-45 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
                         selectedLabel.includes(levelName) ? "bg-green-500" : ""
                       }`}
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent default link behavior for left click
                         setExpandedLevel(
                           expandedLevel === levelName ? null : levelName
-                        )
-                      }
+                        );
+                      }}
+                      onContextMenu={(e) => {
+                        // Allows right-click to work as a link (open in new tab)
+                        e.stopPropagation(); // Prevents other right-click actions if any
+                      }}
                     >
                       {levelName}
-                    </button>
+                    </a>
                     {expandedLevel === levelName && (
                       <div className="absolute bg-white border border-gray-300 rounded-md shadow-lg z-10 mt-1 w-full">
                         {levelOptions.map(({ value, label }) => (
-                          <button
-                            key={value}
-                            onClick={() =>
+                          <a
+                            href={`/level/${value}`} // Link for right-click functionality
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => {
+                              e.preventDefault(); // Prevent default for left-click
                               handleLevelSelect(
                                 value,
                                 `${levelName} - ${label}`
-                              )
-                            }
+                              );
+                            }}
                             className="block w-full text-left p-2 hover:bg-gray-400 focus:outline-none"
+                            key={value}
                           >
                             {label}
-                          </button>
+                          </a>
                         ))}
                       </div>
                     )}

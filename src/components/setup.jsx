@@ -230,7 +230,7 @@ const Upload = () => {
       ? ["AdvancedPart1Classwork", "AdvancedPart1Homework"]
       : category === "AdvancedPart2"
       ? ["AdvancedPart2Classwork", "AdvancedPart2Homework"]
-      : category === "Masters"
+      : category === "Junior"
       ? ["Junior_Classwork", "Junior_Homework"] // Only Junior levels for Masters
       : category === "SubJunior"
       ? ["Sub_Junior_Classwork", "Sub_Junior_Homework"]

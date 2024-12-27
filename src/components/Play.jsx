@@ -100,6 +100,11 @@ function Play() {
               <Chessboard
                 position={fen}
                 onPieceDrop={onDrop}
+                customNotationStyle={{
+                  fontSize: "25px",
+                  fontWeight: "bold",
+                  color: "black",
+                }} 
                 boardOrientation="white"
               />
             </div>

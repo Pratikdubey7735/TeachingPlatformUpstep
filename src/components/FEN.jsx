@@ -255,6 +255,11 @@ function FEN({ event }) {
                 customArrows={arrows}
                 customSquareStyles={renderHighlightedSquares()}
                 onSquareClick={onSquareClick}
+                customNotationStyle={{
+                  fontSize: "25px",
+                  fontWeight: "bold",
+                  color: "black",
+                }} 
               />
             </div>
           )}

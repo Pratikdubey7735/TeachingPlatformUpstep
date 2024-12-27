@@ -74,6 +74,22 @@ function Play() {
 
   const userMoves = hisMovesMoves();
 
+  // Add keyboard event listeners
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'ArrowLeft') {
+        handlePreviousMove();
+      } else if (event.key === 'ArrowRight') {
+        handleNextMove();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [presentMoveIndex, movementHistory]);
+
   return (
     <div className="flex justify-center items-center bg-green-200 p-4 rounded-lg shadow-lg mb-4 w-full">
       <div className="grid grid-cols-2 gap-4 w-full h-full">

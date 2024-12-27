@@ -269,8 +269,8 @@ const Upload = () => {
                 "AdvancedPart1",
                 "AdvancedPart2",
                 "SubJunior",
-                "Masters",
-                "Senior",
+                "Junior",
+                "SeniorPart1",
                 "SeniorPart2",
               ].map((cat) => (
                 <a

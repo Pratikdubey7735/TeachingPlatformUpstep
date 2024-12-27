@@ -20,51 +20,49 @@ function FEN({ event }) {
   const [specificComment, setSpecificComment] = useState("");
   const [movesVisible, setMovesVisible] = useState(false);
   const [storedMoves, setStoredMoves] = useState([]);
-  const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
+  const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [questionVisible, setQuestionVisible] = useState(false);
   const [boardOrientation, setBoardOrientation] = useState("white");
   const [promotionPiece, setPromotionPiece] = useState("q");
   const [userMoves, setUserMoves] = useState([]);
   const [userFENs, setUserFENs] = useState([new Chess().fen()]);
   const [arrows, setArrows] = useState([]);
-  // Resizing states
   const [leftWidth, setLeftWidth] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
+  const [activePage, setActivePage] = useState(1);
 
-  // Second Part swiper
-  const [activePage, setActivePage] = useState(1); // 1 for Page 1, 2 for Page 2
   const goToPage = (page) => {
     setActivePage(page);
   };
 
   useEffect(() => {
     if (event) {
-      const fenMatch = event.match(/FEN "([^"]+)"/);
+      const fenMatch = event.match(/FEN \"([^\"]+)\"/);
       if (fenMatch && fenMatch[1]) {
         const fen = fenMatch[1];
         const newGame = new Chess(fen);
         setGame(newGame);
-        setUserMoves([]); // Clear user move history
-        setUserFENs([fen]); // Reset FEN history
-        setCurrentMoveIndex(-1); // Reset user move index
+        setUserMoves([]);
+        setUserFENs([fen]);
+        setCurrentMoveIndex(0);
       }
 
-      const titleMatch = event.match(/\[Event "([^"]+)"\]/);
+      const titleMatch = event.match(/\[Event \"([^\"]+)\"\]/);
       if (titleMatch && titleMatch[1]) {
         setEventTitle(titleMatch[1]);
       }
 
-      const whiteMatch = event.match(/\[White "([^"]+)"\]/);
+      const whiteMatch = event.match(/\[White \"([^\"]+)\"\]/);
       if (whiteMatch && whiteMatch[1]) {
         setWhitePlayer(whiteMatch[1]);
       }
 
-      const blackMatch = event.match(/\[Black "([^"]+)"\]/);
+      const blackMatch = event.match(/\[Black \"([^\"]+)\"\]/);
       if (blackMatch && blackMatch[1]) {
         setBlackPlayer(blackMatch[1]);
       }
 
-      const annotatorMatch = event.match(/\[Annotator "([^"]+)"\]/);
+      const annotatorMatch = event.match(/\[Annotator \"([^\"]+)\"\]/);
       if (annotatorMatch && annotatorMatch[1]) {
         setAnnotator(annotatorMatch[1]);
       }
@@ -86,10 +84,28 @@ function FEN({ event }) {
     }
   }, [event]);
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "ArrowLeft") {
+        if (currentMoveIndex > 0) {
+          playUserMove(currentMoveIndex - 1);
+        }
+      } else if (event.key === "ArrowRight") {
+        if (currentMoveIndex < userFENs.length - 1) {
+          playUserMove(currentMoveIndex + 1);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [currentMoveIndex, userFENs]);
+
   const resetHighlights = () => {
     setHighlightedSquares([]);
-    setHighlightedSquares([]);
-    setArrows([]);
     setArrows([]);
   };
 
@@ -117,12 +133,12 @@ function FEN({ event }) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [currentMoveIndex, storedMoves]);
+  }, []);
 
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";
     let move = null;
-  
+
     setGame((game) => {
       const updatedGame = { ...game };
       move = updatedGame.move({
@@ -132,30 +148,17 @@ function FEN({ event }) {
       });
       return updatedGame;
     });
-  
+
     if (move === null) return false;
-  
-    if (currentMoveIndex === userMoves.length - 1) {
-      // Handle appending white and black moves properly
-      setUserMoves((prevMoves) => {
-        if (prevMoves.length % 2 === 0) {
-          // It's white's turn
-          return [...prevMoves, move.san];
-        } else {
-          // It's black's turn
-          return [...prevMoves, move.san];
-        }
-      });
-      setUserFENs((prevFENs) => [...prevFENs, game.fen()]);
-      setCurrentMoveIndex((prevIndex) => prevIndex + 1);
-    } else {
-      console.warn("Cannot add moves. User is not at the latest move index.");
-    }
-  
+
+    setUserMoves((prevMoves) => [...prevMoves.slice(0, currentMoveIndex + 1), move.san]);
+    setUserFENs((prevFENs) => [...prevFENs.slice(0, currentMoveIndex + 1), game.fen()]);
+    setCurrentMoveIndex((prevIndex) => prevIndex + 1);
+
     determineGameOutcome();
     return true;
   };
-  
+
   const playUserMove = (moveIndex) => {
     setGame(new Chess(userFENs[moveIndex]));
     setCurrentMoveIndex(moveIndex);
@@ -214,7 +217,7 @@ function FEN({ event }) {
   const handleMouseMove = (e) => {
     if (!isDragging) return;
     const newWidth = (e.clientX / window.innerWidth) * 100;
-    setLeftWidth(Math.min(80, Math.max(20, newWidth))); // Limits width between 20% and 80%
+    setLeftWidth(Math.min(80, Math.max(20, newWidth)));
   };
 
   useEffect(() => {
@@ -229,13 +232,12 @@ function FEN({ event }) {
   const formatMoveHistory = () => {
     const formatted = [];
     for (let i = 0; i < userMoves.length; i += 2) {
-      const whiteMove = userMoves[i] || "..."; // Placeholder for missing white move
-      const blackMove = userMoves[i + 1] || "..."; // Placeholder for missing black move
+      const whiteMove = userMoves[i] || "...";
+      const blackMove = userMoves[i + 1] || "...";
       formatted.push(`${Math.floor(i / 2) + 1}. ${whiteMove} ${blackMove}`);
     }
     return formatted;
   };
-  
 
   return (
     <div className="bg-green-200 p-4 rounded-lg shadow-lg mb-4 w-full">
@@ -253,11 +255,6 @@ function FEN({ event }) {
                 customArrows={arrows}
                 customSquareStyles={renderHighlightedSquares()}
                 onSquareClick={onSquareClick}
-                customNotationStyle={{
-                  fontSize: "25px",
-                  fontWeight: "bold",
-                  color: "black",
-                }}
               />
             </div>
           )}
@@ -385,11 +382,11 @@ function FEN({ event }) {
                           key={index}
                           className={`p-2 mb-1 rounded ${
                             index === Math.floor(currentMoveIndex / 2)
-                              ? "bg-blue-200 font-bold" // Highlight current move pair
+                              ? "bg-blue-200 font-bold"
                               : "hover:bg-gray-200 cursor-pointer"
                           }`}
                           onClick={() => {
-                            playUserMove(index * 2); // Navigate to the corresponding move index
+                            playUserMove(index * 2);
                           }}
                         >
                           {formattedMove}

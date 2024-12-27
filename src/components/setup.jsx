@@ -218,10 +218,9 @@ const Upload = () => {
     }
   };
 
-  // Filter levels based on the category selected (Foundation, Masters, or Senior)
-  const filteredLevels =
+ const filteredLevels =
     category === "Beginner"
-      ? ["BeginnerClasswork", "BeginnerHomework"] 
+      ? ["BeginnerClasswork", "BeginnerHomework"]
       : category === "AdvancedBeginner"
       ? ["AdvancedBeginnerClasswork", "AdvancedBeginnerHomework"]
       : category === "Intermediate"

@@ -51,15 +51,17 @@ const Upload = () => {
   };
 
   const parsePGN = (content) => {
-    const regex = /(?<!\[.*)\*\s*/g;
+    const regex = /(?=\[Event\s)/g; // Matches the start of each PGN game by detecting '[Event '.
+  
     const eventList = content
-      .split(regex)
-      .filter((event) => event.trim())
-      .map((event) => event.trim() + " *");
-
+      .split(regex) // Splits the content whenever '[Event ' is detected.
+      .filter((event) => event.trim()) // Removes empty or whitespace-only entries.
+      .map((event) => event.trim()); // Trims each event string.
+  
     setEvents(eventList);
     setCurrentIndex(0);
   };
+  
 
   const handleLevelSelect = (selectedLevel, label) => {
     setLevel(selectedLevel);
@@ -72,36 +74,18 @@ const Upload = () => {
   };
 
   const levels = {
-    BeginnerClasswork: [
-      { value: "BeginnerClassworkPGN", label: "Classwork" },
-    ],
-    BeginnerHomework: [
-      { value: "BeginnerHomeworkPGN", label: "Homework" },
-    ],
-    AdvancedBeginnerClasswork: [
-      { value: "AdvBegClass", label: "Classwork" },
-    ],
-    AdvancedBeginnerHomework: [
-      { value: "AdvBegHome", label: "Homework" },
-    ],
-    IntermediateClasswork: [
-      { value: "InterClass", label: "Classwork" },
-    ],
-    IntermediateHomework: [
-      { value: "InterHome", label: "Homework" },
-    ],
-    AdvancedPart1Classwork: [
-      { value: "AdvanPart1Class", label: "Classwork" },
-    ],
-    AdvancedPart1Homework: [
-      { value: "AdvanPart1Home", label: "Homework" },
-    ],
+    BeginnerClasswork: [{ value: "BeginnerClassworkPGN", label: "Classwork" }],
+    BeginnerHomework: [{ value: "BeginnerHomeworkPGN", label: "Homework" }],
+    AdvancedBeginnerClasswork: [{ value: "AdvBegClass", label: "Classwork" }],
+    AdvancedBeginnerHomework: [{ value: "AdvBegHome", label: "Homework" }],
+    IntermediateClasswork: [{ value: "InterClass", label: "Classwork" }],
+    IntermediateHomework: [{ value: "InterHome", label: "Homework" }],
+    AdvancedPart1Classwork: [{ value: "AdvanPart1Class", label: "Classwork" }],
+    AdvancedPart1Homework: [{ value: "AdvanPart1Home", label: "Homework" }],
     AdvancedPart2Classwork: [
       { value: "AdvancePart2Class", label: "Classwork" },
     ],
-    AdvancedPart2Homework: [
-      { value: "AdvPart2Home", label: "Homework" },
-    ],
+    AdvancedPart2Homework: [{ value: "AdvPart2Home", label: "Homework" }],
     Junior_Classwork: [
       { value: "Jr1C", label: "Jr1" },
       { value: "Jr2C", label: "Jr2" },
@@ -156,7 +140,7 @@ const Upload = () => {
       { value: "Sr9C", label: "Sr9" },
       { value: "Sr10C", label: "Sr10" },
       { value: "Sr11C", label: "Sr11" },
-      { value: "Sr12C", label: "Sr12" },
+      { value: "Sr12C", label: "Sr11" },
     ],
     Senior_Part2_Homework: [
       { value: "Sr7H", label: "Sr7" },
@@ -164,7 +148,7 @@ const Upload = () => {
       { value: "Sr9H", label: "Sr9" },
       { value: "Sr10H", label: "Sr10" },
       { value: "Sr11H", label: "Sr11" },
-      { value: "Sr12H", label: "Sr12" },
+      { value: "Sr12H", label: "Sr11" },
     ],
   };
 
@@ -218,7 +202,8 @@ const Upload = () => {
     }
   };
 
- const filteredLevels =
+  // Filter levels based on the category selected (Foundation, Masters, or Senior)
+  const filteredLevels =
     category === "Beginner"
       ? ["BeginnerClasswork", "BeginnerHomework"]
       : category === "AdvancedBeginner"

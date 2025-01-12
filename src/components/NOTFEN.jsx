@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
 import { HiArrowSmLeft, HiArrowSmRight } from "react-icons/hi";
+import { parse } from "pgn-parser";
 
 function NOTFEN({ event }) {
   const [eventDetails, setEventDetails] = useState({});
@@ -56,16 +57,19 @@ function NOTFEN({ event }) {
   };
 
   const parsePGN = (pgn) => {
-    const chessInstance = new Chess();
-    const isValid = chessInstance.load_pgn(pgn);
-
-    if (isValid) {
-      const history = chessInstance.history({ verbose: true });
-      setMoves(history);
-      setChess(new Chess());
-      setCurrentMoveIndex(0);
-    } else {
-      console.error("Invalid PGN");
+    try {
+      // Parse PGN using pgn-parser
+      const parsed = parse(pgn);
+      if (parsed.length > 0 && parsed[0].moves) {
+        const parsedMoves = parsed[0].moves.map((move) => ({
+          san: move.move,
+        }));
+        setMoves(parsedMoves);
+        setChess(new Chess());
+        setCurrentMoveIndex(0);
+      }
+    } catch (error) {
+      console.error("Invalid PGN format:", error);
     }
   };
 
@@ -231,6 +235,9 @@ function NOTFEN({ event }) {
       </span>
     );
   };
+
+
+  
 
   return (
     <div className="bg-green-200 p-4 rounded-lg shadow-lg mb-4 w-full">

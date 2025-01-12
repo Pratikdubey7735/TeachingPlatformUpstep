@@ -19,7 +19,7 @@ function FEN({ event }) {
   const [specificComment, setSpecificComment] = useState("");
   const [boardOrientation, setBoardOrientation] = useState("white");
   const [promotionPiece, setPromotionPiece] = useState("q");
-  const [questionVisible, setQuestionVisible] = useState(false);
+  const [questionVisible, setQuestionVisible] = useState(true);
 
   useEffect(() => {
     if (event) {

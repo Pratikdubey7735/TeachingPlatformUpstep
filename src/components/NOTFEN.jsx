@@ -282,7 +282,7 @@ function NOTFEN({ event }) {
               </div>
             )}
             <h3 className="text-lg font-bold mb-2">Game Details:</h3>
-            <pre className="whitespace-pre-wrap">{event}</pre>
+            <pre className="whitespace-pre-wrap select-none">{event}</pre>
             <h3 className="text-lg font-bold mb-2">Moves:</h3>
             <div className="flex flex-wrap whitespace-nowrap overflow-x-auto bg-gray-50 p-2 rounded">
               {moves.map((move, index) => (

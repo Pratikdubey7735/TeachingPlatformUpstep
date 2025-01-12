@@ -19,6 +19,7 @@ function FEN({ event }) {
   const [specificComment, setSpecificComment] = useState("");
   const [boardOrientation, setBoardOrientation] = useState("white");
   const [promotionPiece, setPromotionPiece] = useState("q");
+  const [questionVisible, setQuestionVisible] = useState(false);
 
   useEffect(() => {
     if (event) {
@@ -166,13 +167,11 @@ function FEN({ event }) {
             <p className="mb-2 select-none">
               <strong>Annotator:</strong> {annotator}
             </p>
-            {gameOutcome && (
-              <p className="text-red-600 font-semibold">{gameOutcome}</p>
-            )}
-            
+            {questionVisible && (
             <pre className="whitespace-pre-wrap text-gray-700 font-semibold break-words m-0 p-0 leading-tight mt-4">
               {specificComment.replace(/\n\s*\n/g, "\n").trim()}
             </pre>
+            )}
           </div>
           <button
                   onClick={resetHighlights}
@@ -191,6 +190,12 @@ function FEN({ event }) {
             >
               Flip board 🔁
             </button>
+            <button
+                  onClick={() => setQuestionVisible((prev) => !prev)}
+                  className="bg-blue-500 text-white px-4 py-1 rounded-full mt-4"
+                >
+                  {questionVisible ? "Hide Question" : "Show Question"}
+                </button>
         </div>
       </div>
     </div>

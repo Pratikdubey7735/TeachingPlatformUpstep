@@ -5,7 +5,7 @@ import { Chessboard } from "react-chessboard";
 import { useNavigate } from "react-router-dom";
 
 const DemoComponent = () => {
-  const game = useMemo(() => new Chess("8/8/8/8/8/8/8/8 w - - 0 1"), []);
+  const game = useMemo(() => new Chess("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"), []);
   const [boardOrientation, setBoardOrientation] = useState("white");
   const [fenPosition, setFenPosition] = useState(game.fen());
   const navigate = useNavigate();

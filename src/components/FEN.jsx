@@ -59,6 +59,26 @@ function FEN({ event }) {
     }
   }, [event]);
 
+   useEffect(() => {
+       const handleKeyDown = (event) => {
+         if (event.altKey) {
+           setArrowColor("rgba(255, 0, 0, 0.7)");
+           setCurrentHighlightColor("rgba(255, 0, 0, 0.5)");
+         } else if (event.ctrlKey) {
+           setArrowColor("rgba(0, 255, 0, 0.7)");
+           setCurrentHighlightColor("rgba(0, 255, 0, 0.5)");
+         } else if (event.shiftKey) {
+           setArrowColor("rgba(0, 0, 255, 0.7)");
+           setCurrentHighlightColor("rgba(0, 0, 255, 0.5)");
+         }
+       };
+   
+       window.addEventListener("keydown", handleKeyDown);
+       return () => {
+         window.removeEventListener("keydown", handleKeyDown);
+       };
+     }, []);
+
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";
     const move = game.move({
@@ -150,6 +170,8 @@ function FEN({ event }) {
               <Chessboard
                 position={game.fen()}
                 onPieceDrop={onDrop}
+                customArrowColor={arrowColor}
+                 customArrows={arrows}
                 boardOrientation={boardOrientation}
                 customSquareStyles={renderHighlightedSquares()}
                 onSquareClick={onSquareClick}

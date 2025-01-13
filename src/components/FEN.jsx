@@ -175,6 +175,11 @@ function FEN({ event }) {
                 boardOrientation={boardOrientation}
                 customSquareStyles={renderHighlightedSquares()}
                 onSquareClick={onSquareClick}
+                customNotationStyle={{
+                fontSize: "25px",
+                fontWeight: "bold",
+                color: "black",
+              }}
               />
             </div>
           )}

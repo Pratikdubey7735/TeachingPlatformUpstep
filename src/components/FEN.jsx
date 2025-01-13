@@ -6,7 +6,7 @@ function FEN({ event }) {
   const [game, setGame] = useState(new Chess());
   const [highlightedSquares, setHighlightedSquares] = useState([]);
   const [arrowColor, setArrowColor] = useState("rgba(255, 0, 0, 0.7)");
-   const [arrows, setArrows] = useState([]);
+  const [arrows, setArrows] = useState([]);
   const [currentHighlightColor, setCurrentHighlightColor] = useState(
     "rgba(255, 0, 0, 0.5)"
   );
@@ -18,8 +18,10 @@ function FEN({ event }) {
   const [annotator, setAnnotator] = useState("");
   const [specificComment, setSpecificComment] = useState("");
   const [boardOrientation, setBoardOrientation] = useState("white");
-  const [promotionPiece, setPromotionPiece] = useState("q");
   const [questionVisible, setQuestionVisible] = useState(true);
+
+  const [moveHistory, setMoveHistory] = useState([]);
+  const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
 
   useEffect(() => {
     if (event) {
@@ -28,6 +30,8 @@ function FEN({ event }) {
         const fen = fenMatch[1];
         const newGame = new Chess(fen);
         setGame(newGame);
+        setMoveHistory([]);
+        setCurrentMoveIndex(0);
       }
 
       const titleMatch = event.match(/\[Event \"([^\"]+)\"\]/);
@@ -54,22 +58,54 @@ function FEN({ event }) {
       setSpecificComment(specificCommentMatch);
     }
   }, [event]);
-   
+
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";
     const move = game.move({
       from: source,
       to: target,
-      promotion: promotion, 
+      promotion: promotion,
     });
 
     if (move === null) {
-      return false; 
+      return false; // Invalid move
     }
 
-    setGame(new Chess(game.fen())); 
-    return true; 
+    const newHistory = moveHistory.slice(0, currentMoveIndex); // Truncate to current index for variations
+    newHistory.push(move);
+    setMoveHistory(newHistory);
+    setCurrentMoveIndex(newHistory.length);
+    setGame(new Chess(game.fen())); // Update the game state
+    return true;
   };
+
+  const navigateToMove = (index) => {
+    const newGame = new Chess(); // Reset to the initial position
+    const fen = event.match(/FEN \"([^\"]+)\"/)?.[1]; // Check if a custom FEN is provided
+  
+    if (fen) {
+      newGame.load(fen); // Load the custom FEN if it exists
+    }
+  
+    // Apply moves from the history up to the selected index
+    moveHistory.slice(0, index).forEach((move) => newGame.move(move.san));
+  
+    setGame(newGame); // Update the chessboard state
+    setCurrentMoveIndex(index); // Update the current move index
+  };
+  
+  const handlePreviousMove = () => {
+    if (currentMoveIndex > 0) {
+      navigateToMove(currentMoveIndex - 1);
+    }
+  };
+  
+  const handleNextMove = () => {
+    if (currentMoveIndex < moveHistory.length) {
+      navigateToMove(currentMoveIndex + 1);
+    }
+  };
+  
 
   const resetHighlights = () => {
     setHighlightedSquares([]);
@@ -93,27 +129,6 @@ function FEN({ event }) {
     });
   };
 
-    
-      useEffect(() => {
-        const handleKeyDown = (event) => {
-          if (event.altKey) {
-            setArrowColor("rgba(255, 0, 0, 0.7)");
-            setCurrentHighlightColor("rgba(255, 0, 0, 0.5)");
-          } else if (event.ctrlKey) {
-            setArrowColor("rgba(0, 255, 0, 0.7)");
-            setCurrentHighlightColor("rgba(0, 255, 0, 0.5)");
-          } else if (event.shiftKey) {
-            setArrowColor("rgba(0, 0, 255, 0.7)");
-            setCurrentHighlightColor("rgba(0, 0, 255, 0.5)");
-          }
-        };
-    
-        window.addEventListener("keydown", handleKeyDown);
-        return () => {
-          window.removeEventListener("keydown", handleKeyDown);
-        };
-      }, []);
-
   const renderHighlightedSquares = () => {
     const highlightedStyles = {};
     highlightedSquares.forEach(({ square, color }) => {
@@ -123,12 +138,6 @@ function FEN({ event }) {
       };
     });
     return highlightedStyles;
-  };
-
-  const buttonStyle = {
-    margin: "10px",
-    padding: "5px 10px",
-    cursor: "pointer",
   };
 
   return (
@@ -142,15 +151,8 @@ function FEN({ event }) {
                 position={game.fen()}
                 onPieceDrop={onDrop}
                 boardOrientation={boardOrientation}
-                customArrowColor={arrowColor}
-                customArrows={arrows}
                 customSquareStyles={renderHighlightedSquares()}
                 onSquareClick={onSquareClick}
-                customNotationStyle={{
-                  fontSize: "25px",
-                  fontWeight: "bold",
-                  color: "black",
-                }} 
               />
             </div>
           )}
@@ -161,44 +163,69 @@ function FEN({ event }) {
               Event Details:
             </h4>
             <p className="mb-2 select-none">
-              <strong className="text-xl font-bold select-none">Topic:</strong>{" "}
-              {whitePlayer} vs {blackPlayer}
+              <strong>Topic:</strong> {whitePlayer} vs {blackPlayer}
             </p>
             <p className="mb-2 select-none">
               <strong>Annotator:</strong> {annotator}
             </p>
             {questionVisible && (
-            <pre className="whitespace-pre-wrap text-gray-700 font-semibold break-words m-0 p-0 leading-tight mt-4">
-              {specificComment.replace(/\n\s*\n/g, "\n").trim()}
-            </pre>
+              <pre className="whitespace-pre-wrap text-gray-700 font-semibold break-words m-0 p-0 leading-tight mt-4">
+                {specificComment.replace(/\n\s*\n/g, "\n").trim()}
+              </pre>
             )}
+            <h4 className="font-semibold text-lg mt-4">Moves:</h4>
+            <div className="overflow-x-auto bg-gray-50 p-2 rounded">
+              {moveHistory.map((move, index) => (
+                <span
+                  key={index}
+                  className={`cursor-pointer ${
+                    index === currentMoveIndex - 1 ? "font-bold text-blue-600" : ""
+                  }`}
+                  style={{ marginRight: "5px" }}
+                  onClick={() => navigateToMove(index + 1)}
+                >
+                  {index % 2 === 0 ? `${Math.floor(index / 2) + 1}.` : ""}
+                  {move.san}{" "}
+                </span>
+              ))}
+            </div>
           </div>
           <button
-                  onClick={resetHighlights}
-                  className="mt-4 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition duration-200"
-                >
-                  Reset Highlights
-                </button>
-                <button
-              className="bg-blue-500 text-white px-4 py-1 rounded-full mt-4"
-              style={buttonStyle}
-              onClick={() =>
-                setBoardOrientation(
-                  boardOrientation === "white" ? "black" : "white"
-                )
-              }
-            >
-              Flip board 🔁
-            </button>
-            <button
-                  onClick={() => setQuestionVisible((prev) => !prev)}
-                  className="bg-blue-500 text-white px-4 py-1 rounded-full mt-4"
-                >
-                  {questionVisible ? "Hide Question" : "Show Question"}
-                </button>
+            onClick={resetHighlights}
+            className="mt-4 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition duration-200"
+          >
+            Reset Highlights
+          </button>
+          <button
+            onClick={() =>
+              setBoardOrientation(boardOrientation === "white" ? "black" : "white")
+            }
+            className="ml-2 bg-blue-500 text-white px-4 py-1 rounded-full hover:bg-blue-600 transition duration-200"
+          >
+            Flip Board
+          </button>
+          <button
+            onClick={handlePreviousMove}
+            className="ml-2 bg-gray-500 text-white px-4 py-1 rounded-full hover:bg-gray-600 transition duration-200"
+          >
+            Previous
+          </button>
+          <button
+            onClick={handleNextMove}
+            className="ml-2 bg-gray-500 text-white px-4 py-1 rounded-full hover:bg-gray-600 transition duration-200"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setQuestionVisible(!questionVisible)}
+            className="ml-2 bg-blue-500 text-white px-4 py-1 rounded-full hover:bg-blue-600 transition duration-200"
+          >
+            {questionVisible ? "Hide Question" : "Show Question"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
 export default FEN;

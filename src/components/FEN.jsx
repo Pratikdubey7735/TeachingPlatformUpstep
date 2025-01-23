@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
+import { HiArrowSmLeft, HiArrowSmRight } from "react-icons/hi";
 
 function FEN({ event }) {
   const [game, setGame] = useState(new Chess());
@@ -59,25 +60,25 @@ function FEN({ event }) {
     }
   }, [event]);
 
-   useEffect(() => {
-       const handleKeyDown = (event) => {
-         if (event.altKey) {
-           setArrowColor("rgba(255, 0, 0, 0.7)");
-           setCurrentHighlightColor("rgba(255, 0, 0, 0.5)");
-         } else if (event.ctrlKey) {
-           setArrowColor("rgba(0, 255, 0, 0.7)");
-           setCurrentHighlightColor("rgba(0, 255, 0, 0.5)");
-         } else if (event.shiftKey) {
-           setArrowColor("rgba(0, 0, 255, 0.7)");
-           setCurrentHighlightColor("rgba(0, 0, 255, 0.5)");
-         }
-       };
-   
-       window.addEventListener("keydown", handleKeyDown);
-       return () => {
-         window.removeEventListener("keydown", handleKeyDown);
-       };
-     }, []);
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.altKey) {
+        setArrowColor("rgba(255, 0, 0, 0.7)");
+        setCurrentHighlightColor("rgba(255, 0, 0, 0.5)");
+      } else if (event.ctrlKey) {
+        setArrowColor("rgba(0, 255, 0, 0.7)");
+        setCurrentHighlightColor("rgba(0, 255, 0, 0.5)");
+      } else if (event.shiftKey) {
+        setArrowColor("rgba(0, 0, 255, 0.7)");
+        setCurrentHighlightColor("rgba(0, 0, 255, 0.5)");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";
@@ -102,30 +103,29 @@ function FEN({ event }) {
   const navigateToMove = (index) => {
     const newGame = new Chess(); // Reset to the initial position
     const fen = event.match(/FEN \"([^\"]+)\"/)?.[1]; // Check if a custom FEN is provided
-  
+
     if (fen) {
       newGame.load(fen); // Load the custom FEN if it exists
     }
-  
+
     // Apply moves from the history up to the selected index
     moveHistory.slice(0, index).forEach((move) => newGame.move(move.san));
-  
+
     setGame(newGame); // Update the chessboard state
     setCurrentMoveIndex(index); // Update the current move index
   };
-  
+
   const handlePreviousMove = () => {
     if (currentMoveIndex > 0) {
       navigateToMove(currentMoveIndex - 1);
     }
   };
-  
+
   const handleNextMove = () => {
     if (currentMoveIndex < moveHistory.length) {
       navigateToMove(currentMoveIndex + 1);
     }
   };
-  
 
   const resetHighlights = () => {
     setHighlightedSquares([]);
@@ -162,24 +162,23 @@ function FEN({ event }) {
 
   return (
     <div className="bg-green-200 p-4 rounded-lg shadow-lg mb-4 w-full">
-      <h3 className="text-xl font-semibold mb-2 text-center">Event</h3>
-      <div className="flex bg-white rounded-md shadow-md border border-gray-300">
-        <div className="flex-none p-2" style={{ width: "50%" }}>
+      <div className="flex flex-col md:flex-row bg-white rounded-md shadow-md border border-gray-300">
+        <div className="flex-none p-2 w-full md:w-1/2">
           {game && (
             <div className="flex items-center justify-center border-8 border-gray-400 h-auto w-full ">
               <Chessboard
                 position={game.fen()}
                 onPieceDrop={onDrop}
                 customArrowColor={arrowColor}
-                 customArrows={arrows}
+                customArrows={arrows}
                 boardOrientation={boardOrientation}
                 customSquareStyles={renderHighlightedSquares()}
                 onSquareClick={onSquareClick}
                 customNotationStyle={{
-                fontSize: "25px",
-                fontWeight: "bold",
-                color: "black",
-              }}
+                  fontSize: "25px",
+                  fontWeight: "bold",
+                  color: "black",
+                }}
               />
             </div>
           )}
@@ -206,7 +205,9 @@ function FEN({ event }) {
                 <span
                   key={index}
                   className={`cursor-pointer ${
-                    index === currentMoveIndex - 1 ? "font-bold text-blue-600" : ""
+                    index === currentMoveIndex - 1
+                      ? "font-bold text-blue-600"
+                      : ""
                   }`}
                   style={{ marginRight: "5px" }}
                   onClick={() => navigateToMove(index + 1)}
@@ -225,32 +226,31 @@ function FEN({ event }) {
           </button>
           <button
             onClick={() =>
-              setBoardOrientation(boardOrientation === "white" ? "black" : "white")
+              setBoardOrientation(
+                boardOrientation === "white" ? "black" : "white"
+              )
             }
             className="ml-2 bg-blue-500 text-white px-4 py-1 rounded-full hover:bg-blue-600 transition duration-200"
           >
             Flip Board
           </button>
-          <button
-            onClick={handlePreviousMove}
-            className="ml-2 bg-gray-500 text-white px-4 py-1 rounded-full hover:bg-gray-600 transition duration-200"
-          >
-            Previous
-          </button>
-          <button
-            onClick={handleNextMove}
-            className="ml-2 bg-gray-500 text-white px-4 py-1 rounded-full hover:bg-gray-600 transition duration-200"
-          >
-            Next
-          </button>
-          <button
-            onClick={() => setQuestionVisible(!questionVisible)}
-            className="ml-2 bg-blue-500 text-white px-4 py-1 rounded-full hover:bg-blue-600 transition duration-200"
-          >
-            {questionVisible ? "Hide Question" : "Show Question"}
-          </button>
+        
+        <button
+          onClick={handlePreviousMove}
+          className="m-4 p-3 rounded-full text-lg bg-slate-400 hover:bg-blue-200 duration-100"
+        >
+          <HiArrowSmLeft />
+        </button>
+        <button
+          onClick={handleNextMove}
+          className="m-2 p-3 rounded-full text-lg bg-slate-400 hover:bg-blue-200 duration-100"
+        >
+          <HiArrowSmRight />
+        </button>
+     
         </div>
       </div>
+      
     </div>
   );
 }

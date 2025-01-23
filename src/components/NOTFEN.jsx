@@ -7,7 +7,7 @@ import { parse } from "pgn-parser";
 function NOTFEN({ event }) {
   const [eventDetails, setEventDetails] = useState({});
   const [moves, setMoves] = useState([]);
-  const [isVisible, setIsVisible]= useState(true);
+  const [isVisible, setIsVisible] = useState(true);
   const [variations, setVariations] = useState({});
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [chess, setChess] = useState(new Chess());
@@ -92,6 +92,7 @@ function NOTFEN({ event }) {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+  
   const toggleSquareHighlight = (square) => {
     setHighlightedSquares((prev) => {
       const existingHighlight = prev.find(
@@ -114,10 +115,12 @@ function NOTFEN({ event }) {
     });
     return highlightedStyles;
   };
+
   const resetHighlights = () => {
     setHighlightedSquares([]);
     setArrows([]);
   };
+
   const flipBoard = () => {
     setBoardOrientation((prevOrientation) =>
       prevOrientation === "white" ? "black" : "white"
@@ -236,24 +239,21 @@ function NOTFEN({ event }) {
     );
   };
 
-
-  
-
   return (
     <div className="bg-green-200 p-4 rounded-lg shadow-lg mb-4 w-full">
-      <div className="flex bg-white rounded-md shadow-md border border-gray-300">
+      <div className="flex flex-wrap lg:flex-nowrap bg-white rounded-md shadow-md border border-gray-300">
         {/* Left Container */}
-        <div className="flex-none p-2" style={{ width: "50%" }}>
+        <div className="flex-none p-2 w-full lg:w-1/2">
           <div className="flex items-center justify-center border-8 border-gray-400 h-auto w-full">
             <Chessboard
               position={chess.fen()}
               onSquareClick={(square) => toggleSquareHighlight(square)}
               customSquareStyles={renderHighlightedSquares()}
               customArrowColor={arrowColor}
-              customArrows={arrows} // Define custom arrows if required
+              customArrows={arrows}
               boardOrientation={boardOrientation}
               onPieceDrop={handleMove}
-              style={{ width: "750px" }}
+              style={{ width: "100%", maxWidth: "750px" }}
               customNotationStyle={{
                 fontSize: "25px",
                 fontWeight: "bold",
@@ -264,63 +264,73 @@ function NOTFEN({ event }) {
         </div>
 
         {/* Right Container */}
-        <div className="flex-1 p-4"> 
+        <div className="flex-1 p-4">
           {isVisible && (
             <div className="p-4 border rounded-lg bg-gray-100 h-full overflow-y-scroll max-h-[650px]">
-            {Object.keys(eventDetails).length > 0 && (
-              <div className="mt-4 text-center">
-                <h3 className="text-4xl font-bold text-gray-500">
-                  Event Details:
-                </h3>
-                <p className="text-3xl font-semibold mt-4 text-blue-500">
-                  {eventDetails.White || "N/A"} vs {eventDetails.Black || "N/A"}
-                </p>
-                <p className="text-2xl font-semibold mt-4">
-                  Annotator: {eventDetails.Annotator || "N/A"}
-                </p>
-                <hr className="my-4 border-gray-400" />
+              {Object.keys(eventDetails).length > 0 && (
+                <div className="mt-4 text-center">
+                  <h3 className="text-4xl font-bold text-gray-500">
+                    Event Details:
+                  </h3>
+                  <p className="text-3xl font-semibold mt-4 text-blue-500">
+                    {eventDetails.White || "N/A"} vs {eventDetails.Black || "N/A"}
+                  </p>
+                  <p className="text-2xl font-semibold mt-4">
+                    Annotator: {eventDetails.Annotator || "N/A"}
+                  </p>
+                  <hr className="my-4 border-gray-400" />
+                </div>
+              )}
+              <h3 className="text-lg font-bold mb-2">Game Details:</h3>
+              <pre className="whitespace-pre-wrap select-none">{event}</pre>
+              <h3 className="text-lg font-bold mb-2">Moves:</h3>
+              <div className="flex flex-wrap whitespace-nowrap overflow-x-auto bg-gray-50 p-2 rounded">
+                {moves.map((move, index) => (
+                  <React.Fragment key={index}>
+                    {renderMove(move, index)}
+                    {variations[index] &&
+                      renderVariation(variations[index], index)}
+                  </React.Fragment>
+                ))}
               </div>
-            )}
-            <h3 className="text-lg font-bold mb-2">Game Details:</h3>
-            <pre className="whitespace-pre-wrap select-none">{event}</pre>
-            <h3 className="text-lg font-bold mb-2">Moves:</h3>
-            <div className="flex flex-wrap whitespace-nowrap overflow-x-auto bg-gray-50 p-2 rounded">
-              {moves.map((move, index) => (
-                <React.Fragment key={index}>
-                  {renderMove(move, index)}
-                  {variations[index] &&
-                    renderVariation(variations[index], index)}
-                </React.Fragment>
-              ))}   
             </div>
-          </div>
           )}
-          
           <button
-          className=" ml-5 mt-4 bg-blue-500 text-white p-1 rounded-full hover:bg-blue-600 transition duration-200 pr-3 mr-4 mb-4"
-          onClick={() => setIsVisible (!isVisible)}>
-          {isVisible ? 'Hide' : 'Show'} Event
-          </button>  
+            className="ml-5 mt-4 bg-blue-500 text-white p-1 rounded-full hover:bg-blue-600 transition duration-200 pr-3 mr-4 mb-4"
+            onClick={() => setIsVisible(!isVisible)}
+          >
+            {isVisible ? "Hide" : "Show"} Event
+          </button>
           <button
-                onClick={resetHighlights}
-                className="mt-4 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition duration-200"
-              >
-                Reset Highlights
-              </button>
+            onClick={resetHighlights}
+            className="mt-4 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition duration-200"
+          >
+            Reset Highlights
+          </button>
 
-              <button
-                onClick={flipBoard}
-                className=" ml-5 mt-4 bg-blue-500 text-white p-1 rounded-full hover:bg-blue-600 transition duration-200"
-              >
-                Flip Board
-              </button>
-               <button className="p-2 m-3  rounded-full text-2xl bg-slate-400 hover:bg-blue-200 duration-100"
-               onClick={handlePreviousMove}> <HiArrowSmLeft/> </button>
-              <button className="p-2 m-3  rounded-full text-2xl bg-slate-400 hover:bg-blue-200 transition duration-200"
-              onClick={handleNextMove}><HiArrowSmRight/></button>
+          <button
+            onClick={flipBoard}
+            className="ml-5 mt-4 bg-blue-500 text-white p-1 rounded-full hover:bg-blue-600 transition duration-200"
+          >
+            Flip Board
+          </button>
+
+          <button
+            className="p-2 m-3 rounded-full text-2xl bg-slate-400 hover:bg-blue-200 duration-100"
+            onClick={handlePreviousMove}
+          >
+            <HiArrowSmLeft />
+          </button>
+          <button
+            className="p-2 m-3 rounded-full text-2xl bg-slate-400 hover:bg-blue-200 transition duration-200"
+            onClick={handleNextMove}
+          >
+            <HiArrowSmRight />
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
 export default NOTFEN;

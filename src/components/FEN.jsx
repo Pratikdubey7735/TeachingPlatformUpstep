@@ -35,15 +35,6 @@ function FEN({ event }) {
         setCurrentMoveIndex(0);
       }
 
-       useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "ArrowRight") {
-        handleNextMove();
-      } else if (event.key === "ArrowLeft") {
-        handlePreviousMove();
-      }
-    };
-      
       const titleMatch = event.match(/\[Event \"([^\"]+)\"\]/);
       if (titleMatch && titleMatch[1]) {
         setEventTitle(titleMatch[1]);
@@ -80,7 +71,11 @@ function FEN({ event }) {
       } else if (event.shiftKey) {
         setArrowColor("rgba(0, 0, 255, 0.7)");
         setCurrentHighlightColor("rgba(0, 0, 255, 0.5)");
-      }
+      } else if (event.key === "ArrowRight") {
+      handleNextMove(); // Navigate to the next move
+    } else if (event.key === "ArrowLeft") {
+      handlePreviousMove(); // Navigate to the previous move
+    }
     };
 
     window.addEventListener("keydown", handleKeyDown);

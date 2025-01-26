@@ -80,6 +80,23 @@ function FEN({ event }) {
     };
   }, []);
 
+  useEffect(() => {
+    const handleKeyNavigation = (event) => {
+      if (event.key === "ArrowRight") {
+        handleNextMove();
+      } else if (event.key === "ArrowLeft") {
+        handlePreviousMove();
+      }
+    };
+  
+    window.addEventListener("keydown", handleKeyNavigation);
+  
+    return () => {
+      window.removeEventListener("keydown", handleKeyNavigation);
+    };
+  }, [currentMoveIndex, moveHistory]);
+  
+
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";
     const move = game.move({
@@ -235,6 +252,13 @@ function FEN({ event }) {
             Flip Board
           </button>
         
+          <button
+            className="ml-5 mt-4 bg-blue-500 text-white p-1 rounded-full hover:bg-blue-600 transition duration-200 pr-3 mr-4 mb-4"
+            onClick={() => setQuestionVisible(!questionVisible)}
+          >
+            {questionVisible ? "Hide" : "Show"} Event
+          </button>
+
         <button
           onClick={handlePreviousMove}
           className="m-4 p-3 rounded-full text-lg bg-slate-400 hover:bg-blue-200 duration-100"

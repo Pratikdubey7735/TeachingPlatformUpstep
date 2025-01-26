@@ -35,6 +35,15 @@ function FEN({ event }) {
         setCurrentMoveIndex(0);
       }
 
+       useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "ArrowRight") {
+        handleNextMove();
+      } else if (event.key === "ArrowLeft") {
+        handlePreviousMove();
+      }
+    };
+      
       const titleMatch = event.match(/\[Event \"([^\"]+)\"\]/);
       if (titleMatch && titleMatch[1]) {
         setEventTitle(titleMatch[1]);
@@ -80,14 +89,7 @@ function FEN({ event }) {
     };
   }, []);
 
-   useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "ArrowRight") {
-        handleNextMove();
-      } else if (event.key === "ArrowLeft") {
-        handlePreviousMove();
-      }
-    };
+  
   
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";

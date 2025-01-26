@@ -55,7 +55,7 @@ function FEN({ event }) {
         setAnnotator(annotatorMatch[1]);
       }
 
-      const specificCommentMatch = event.replace(/\[[^\]]*\]/g, ""); // Remove all content inside square brackets
+      const specificCommentMatch = event.replace(/\[[^\]]*\]/g, ""); 
       setSpecificComment(specificCommentMatch);
     }
   }, [event]);
@@ -101,16 +101,16 @@ function FEN({ event }) {
       return false; // Invalid move
     }
 
-    const newHistory = moveHistory.slice(0, currentMoveIndex); // Truncate to current index for variations
+    const newHistory = moveHistory.slice(0, currentMoveIndex);
     newHistory.push(move);
     setMoveHistory(newHistory);
     setCurrentMoveIndex(newHistory.length);
-    setGame(new Chess(game.fen())); // Update the game state
+    setGame(new Chess(game.fen())); 
     return true;
   };
 
   const navigateToMove = (index) => {
-    const newGame = new Chess(); // Reset to the initial position
+    const newGame = new Chess(); 
     const fen = event.match(/FEN \"([^\"]+)\"/)?.[1]; // Check if a custom FEN is provided
 
     if (fen) {

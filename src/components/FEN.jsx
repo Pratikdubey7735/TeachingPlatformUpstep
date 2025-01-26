@@ -60,7 +60,7 @@ function FEN({ event }) {
     }
   }, [event]);
 
-useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.altKey) {
         setArrowColor("rgba(255, 0, 0, 0.7)");
@@ -80,6 +80,15 @@ useEffect(() => {
     };
   }, []);
 
+   useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "ArrowRight") {
+        handleNextMove();
+      } else if (event.key === "ArrowLeft") {
+        handlePreviousMove();
+      }
+    };
+  
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";
     const move = game.move({
@@ -204,15 +213,15 @@ useEffect(() => {
               {moveHistory.map((move, index) => (
                 <span
                   key={index}
-                  className={`cursor-pointer ${
+                  className={cursor-pointer ${
                     index === currentMoveIndex - 1
                       ? "font-bold text-blue-600"
                       : ""
-                  }`}
+                  }}
                   style={{ marginRight: "5px" }}
                   onClick={() => navigateToMove(index + 1)}
                 >
-                  {index % 2 === 0 ? `${Math.floor(index / 2) + 1}.` : ""}
+                  {index % 2 === 0 ? ${Math.floor(index / 2) + 1}. : ""}
                   {move.san}{" "}
                 </span>
               ))}

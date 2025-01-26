@@ -80,6 +80,15 @@ function FEN({ event }) {
     };
   }, []);
 
+   useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "ArrowRight") {
+        handleNextMove();
+      } else if (event.key === "ArrowLeft") {
+        handlePreviousMove();
+      }
+    };
+  
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";
     const move = game.move({

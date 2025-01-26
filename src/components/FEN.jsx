@@ -55,7 +55,7 @@ function FEN({ event }) {
         setAnnotator(annotatorMatch[1]);
       }
 
-      const specificCommentMatch = event.replace(/\[[^\]]*\]/g, ""); 
+      const specificCommentMatch = event.replace(/\[[^\]]*\]/g, ""); // Remove all content inside square brackets
       setSpecificComment(specificCommentMatch);
     }
   }, [event]);
@@ -80,15 +80,6 @@ function FEN({ event }) {
     };
   }, []);
 
-   useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "ArrowRight") {
-        handleNextMove();
-      } else if (event.key === "ArrowLeft") {
-        handlePreviousMove();
-      }
-    };
-  
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";
     const move = game.move({
@@ -101,16 +92,16 @@ function FEN({ event }) {
       return false; // Invalid move
     }
 
-    const newHistory = moveHistory.slice(0, currentMoveIndex);
+    const newHistory = moveHistory.slice(0, currentMoveIndex); // Truncate to current index for variations
     newHistory.push(move);
     setMoveHistory(newHistory);
     setCurrentMoveIndex(newHistory.length);
-    setGame(new Chess(game.fen())); 
+    setGame(new Chess(game.fen())); // Update the game state
     return true;
   };
 
   const navigateToMove = (index) => {
-    const newGame = new Chess(); 
+    const newGame = new Chess(); // Reset to the initial position
     const fen = event.match(/FEN \"([^\"]+)\"/)?.[1]; // Check if a custom FEN is provided
 
     if (fen) {
@@ -213,15 +204,15 @@ function FEN({ event }) {
               {moveHistory.map((move, index) => (
                 <span
                   key={index}
-                  className={cursor-pointer ${
+                  className={`cursor-pointer ${
                     index === currentMoveIndex - 1
                       ? "font-bold text-blue-600"
                       : ""
-                  }}
+                  }`}
                   style={{ marginRight: "5px" }}
                   onClick={() => navigateToMove(index + 1)}
                 >
-                  {index % 2 === 0 ? ${Math.floor(index / 2) + 1}. : ""}
+                  {index % 2 === 0 ? `${Math.floor(index / 2) + 1}.` : ""}
                   {move.san}{" "}
                 </span>
               ))}

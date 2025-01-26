@@ -60,7 +60,9 @@ function FEN({ event }) {
     }
   }, [event]);
 
- useEffect(() => {
+
+
+useEffect(() => {
   const handleKeyDown = (event) => {
     if (event.altKey) {
       setArrowColor("rgba(255, 0, 0, 0.7)");
@@ -71,13 +73,10 @@ function FEN({ event }) {
     } else if (event.shiftKey) {
       setArrowColor("rgba(0, 0, 255, 0.7)");
       setCurrentHighlightColor("rgba(0, 0, 255, 0.5)");
-    }
-
-    // Handle ArrowLeft and ArrowRight for move navigation
-    if (event.key === "ArrowRight") {
-      handleNextMove();
+    } else if (event.key === "ArrowRight") {
+      handleNextMove(); // Navigate to the next move
     } else if (event.key === "ArrowLeft") {
-      handlePreviousMove();
+      handlePreviousMove(); // Navigate to the previous move
     }
   };
 
@@ -85,8 +84,7 @@ function FEN({ event }) {
   return () => {
     window.removeEventListener("keydown", handleKeyDown);
   };
-}, [handleNextMove, handlePreviousMove]);
-
+}, [handleNextMove, handlePreviousMove]); // Add dependencies to avoid stale closures
 
   
   

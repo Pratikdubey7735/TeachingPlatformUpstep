@@ -88,14 +88,13 @@ function FEN({ event }) {
         handlePreviousMove();
       }
     };
-  
+
     window.addEventListener("keydown", handleKeyNavigation);
-  
+
     return () => {
       window.removeEventListener("keydown", handleKeyNavigation);
     };
   }, [currentMoveIndex, moveHistory]);
-  
 
   const onDrop = (source, target, piece) => {
     const promotion = piece[1]?.toLowerCase() ?? "q";
@@ -200,7 +199,9 @@ function FEN({ event }) {
             </div>
           )}
         </div>
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-4 relative">
+          {" "}
+          {/* Add relative position */}
           <div className="p-4 border rounded-lg bg-gray-100 h-full">
             <h4 className="font-semibold text-xl text-blue-600 select-none">
               Event Details:
@@ -235,46 +236,49 @@ function FEN({ event }) {
               ))}
             </div>
           </div>
-          <button
-            onClick={resetHighlights}
-            className="mt-4 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition duration-200"
-          >
-            Reset Highlights
-          </button>
-          <button
-            onClick={() =>
-              setBoardOrientation(
-                boardOrientation === "white" ? "black" : "white"
-              )
-            }
-            className="ml-2 bg-blue-500 text-white px-4 py-1 rounded-full hover:bg-blue-600 transition duration-200"
-          >
-            Flip Board
-          </button>
-        
-          <button
-            className="ml-5 mt-4 bg-blue-500 text-white p-1 rounded-full hover:bg-blue-600 transition duration-200 pr-3 mr-4 mb-4"
-            onClick={() => setQuestionVisible(!questionVisible)}
-          >
-            {questionVisible ? "Hide" : "Show"} Event
-          </button>
+          {/* Buttons Container */}
+          <div className="absolute bottom-4 left-8 right-0 flex gap-2 mb-2">
+            <button
+              onClick={resetHighlights}
+              className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition duration-200"
+            >
+              Reset Highlights
+            </button>
 
-        <button
-          onClick={handlePreviousMove}
-          className="m-4 p-3 rounded-full text-lg bg-slate-400 hover:bg-blue-200 duration-100"
-        >
-          <HiArrowSmLeft />
-        </button>
-        <button
-          onClick={handleNextMove}
-          className="m-2 p-3 rounded-full text-lg bg-slate-400 hover:bg-blue-200 duration-100"
-        >
-          <HiArrowSmRight />
-        </button>
-     
+            <button
+              onClick={() =>
+                setBoardOrientation(
+                  boardOrientation === "white" ? "black" : "white"
+                )
+              }
+              className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition duration-200"
+            >
+              Flip Board
+            </button>
+
+            <button
+              onClick={() => setQuestionVisible(!questionVisible)}
+              className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition duration-200"
+            >
+              {questionVisible ? "Hide" : "Show"} Event
+            </button>
+
+            <button
+              onClick={handlePreviousMove}
+              className="p-3 rounded-full text-lg bg-slate-400 hover:bg-blue-200 duration-100"
+            >
+              <HiArrowSmLeft />
+            </button>
+
+            <button
+              onClick={handleNextMove}
+              className="p-3 rounded-full text-lg bg-slate-400 hover:bg-blue-200 duration-100"
+            >
+              <HiArrowSmRight />
+            </button>
+          </div>
         </div>
       </div>
-      
     </div>
   );
 }

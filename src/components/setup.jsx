@@ -363,21 +363,6 @@ const Upload = () => {
 
       {!isFullscreen && (
         <>
-          <div className="flex flex-row gap-4 fixed bottom-4 right-20">
-            <button
-              onClick={handlePrevious}
-              className="p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
-            >
-              Previous
-            </button>
-            <button
-              onClick={handleNext}
-              className="p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
-            >
-              Next
-            </button>
-          </div>
-
           <button
             onClick={toggleFullscreen}
             className="mt-4 p-3 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-300"
@@ -393,6 +378,20 @@ const Upload = () => {
       >
         DEMO
       </button>
+      <div className="flex flex-row gap-4 fixed bottom-4 right-20">
+            <button
+              onClick={handlePrevious}
+              className="p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
+            >
+              Previous
+            </button>
+            <button
+              onClick={handleNext}
+              className="p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
+            >
+              Next
+            </button>
+          </div>
     </div>
   );
 };

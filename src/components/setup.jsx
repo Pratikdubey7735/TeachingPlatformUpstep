@@ -378,7 +378,7 @@ const Upload = () => {
       >
         DEMO
       </button>
-      <div className="flex flex-row gap-4 fixed bottom-4 right-20">
+      <div className="flex flex-row gap-4 fixed bottom-16 right-20">
             <button
               onClick={handlePrevious}
               className="p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"

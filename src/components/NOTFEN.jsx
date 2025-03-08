@@ -135,47 +135,80 @@ function NOTFEN({ event }) {
       to: targetSquare,
       promotion: promotion,
     });
-
+  
     if (move === null) {
-      return false;
+      return false; // Invalid move
     }
-
-    const moveIndex = currentMoveIndex + 1;
-    const nextMove = moves[moveIndex];
-
-    if (nextMove && move.san === nextMove.san) {
-      setCurrentMoveIndex(moveIndex);
+  
+    const moveIndex = currentMoveIndex;
+    const expectedMove = moves[moveIndex]?.san; // Expected move in mainline
+  
+    if (move.san === expectedMove) {
+      // If move matches the mainline, update currentMoveIndex
+      setCurrentMoveIndex(moveIndex + 1);
     } else {
-      const variationMoves = variations[currentMoveIndex] || [];
+      // If move is a variation, store it separately
       setVariations((prev) => ({
         ...prev,
-        [currentMoveIndex]: [...variationMoves, move],
+        [moveIndex]: [...(prev[moveIndex] || []), move],
       }));
     }
-
+  
     setChess(newChess);
     return true;
   };
+  
 
   const handleNextMove = () => {
     if (currentMoveIndex < moves.length) {
-      const newChess = new Chess(chess.fen());
-      newChess.move(moves[currentMoveIndex].san);
+      let newChess = new Chess(chess.fen());
+  
+      if (variations[currentMoveIndex] && variations[currentMoveIndex].length > 0) {
+        // If there is a variation, allow moving into it
+        const variationMoves = variations[currentMoveIndex];
+        const variationMove = variationMoves[0]; // Take the first variation move
+  
+        newChess.move(variationMove.san);
+        setCurrentMoveIndex(currentMoveIndex + 1);
+      } else {
+        // Normal mainline progression
+        newChess.move(moves[currentMoveIndex].san);
+        setCurrentMoveIndex(currentMoveIndex + 1);
+      }
+  
       setChess(newChess);
-      setCurrentMoveIndex((prev) => prev + 1);
     }
   };
-
+  
   const handlePreviousMove = () => {
     if (currentMoveIndex > 0) {
-      const newChess = new Chess();
-      for (let i = 0; i < currentMoveIndex - 1; i++) {
-        newChess.move(moves[i].san);
+      let newChess = new Chess();
+  
+      // If inside a variation, traverse within it
+      if (variations[currentMoveIndex - 1] && variations[currentMoveIndex - 1].length > 0) {
+        const variationMoves = variations[currentMoveIndex - 1];
+        const lastVariationMove = variationMoves[variationMoves.length - 1]; // Last move in variation
+  
+        // Rebuild the position with all previous mainline moves
+        for (let i = 0; i < currentMoveIndex - 1; i++) {
+          newChess.move(moves[i].san);
+        }
+  
+        newChess.move(lastVariationMove.san); // Apply last variation move
+        setCurrentMoveIndex(currentMoveIndex - 1);
+      } else {
+        // Normal mainline backward traversal
+        for (let i = 0; i < currentMoveIndex - 1; i++) {
+          newChess.move(moves[i].san);
+        }
+  
+        setCurrentMoveIndex(currentMoveIndex - 1);
       }
+  
       setChess(newChess);
-      setCurrentMoveIndex((prev) => prev - 1);
     }
   };
+  
 
   const renderMove = (move, index) => {
     const moveNumber = Math.floor(index / 2) + 1;
@@ -332,5 +365,4 @@ function NOTFEN({ event }) {
     </div>
   );
 }
-
 export default NOTFEN;

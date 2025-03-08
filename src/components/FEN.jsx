@@ -19,23 +19,26 @@ function FEN({ event }) {
   const [annotator, setAnnotator] = useState("");
   const [specificComment, setSpecificComment] = useState("");
   const [questionVisible, setQuestionVisible] = useState(true);
-  const [movesVisible, setMovesVisible] = useState(true); // New state for moves visibility
+  const [movesVisible, setMovesVisible] = useState(true);
 
   const [game, setGame] = useState(new Chess());
-  const [moves, setMoves] = useState([]); // PGN mainline moves
-  const [variations, setVariations] = useState({}); // Stores variations as a tree structure
+  const [moves, setMoves] = useState([]);
+  const [variations, setVariations] = useState({});
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
-  const [currentVariationIndex, setCurrentVariationIndex] = useState(null); // Track variation position
-  const [isInVariation, setIsInVariation] = useState(false); // Track if user is navigating a variation
+  const [currentVariationIndex, setCurrentVariationIndex] = useState(null);
+  const [isInVariation, setIsInVariation] = useState(false);
   const [boardOrientation, setBoardOrientation] = useState("white");
   const [isBlackToMoveStart, setIsBlackToMoveStart] = useState(false);
-  const [halfMoveOffset, setHalfMoveOffset] = useState(0); // Track offset for move numbering
+  const [halfMoveOffset, setHalfMoveOffset] = useState(0);
   const [hasAutoMoved, setHasAutoMoved] = useState(false);
-  const [eventKey, setEventKey] = useState(""); // Add eventKey to track changes
+  const [eventKey, setEventKey] = useState("");
+
+  // Add new state for variation prompt
+  const [showVariationPrompt, setShowVariationPrompt] = useState(false);
+  const [pendingVariationIndex, setPendingVariationIndex] = useState(null);
 
   // Complete reset of all game state when event changes
   useEffect(() => {
-    // Reset all state variables
     resetGameState(event);
   }, [event]);
 
@@ -44,13 +47,13 @@ function FEN({ event }) {
     // Create a unique key for this event
     const newEventKey = Date.now().toString();
     setEventKey(newEventKey);
-    
+
     // Reset board state
     setHighlightedSquares([]);
     setArrows([]);
     setSelectedSquare(null);
     setGameOutcome(null);
-    
+
     // Reset variations and move indices
     setMoves([]);
     setVariations({});
@@ -58,33 +61,37 @@ function FEN({ event }) {
     setCurrentVariationIndex(null);
     setIsInVariation(false);
     setHasAutoMoved(false);
-    
+
+    // Reset variation prompt state
+    setShowVariationPrompt(false);
+    setPendingVariationIndex(null);
+
     // Reset board orientation (optional - you may want to keep the current orientation)
     setBoardOrientation("white");
 
     // Initialize new game with FEN if available
     const newGame = new Chess();
     const fenMatch = currentEvent.match(/FEN \"([^\"]+)\"/);
-    
+
     if (fenMatch && fenMatch[1]) {
       newGame.load(fenMatch[1]);
-      
+
       // Check if Black to move in the starting position
       const blackToMove = fenMatch[1].split(" ")[1] === "b";
       setIsBlackToMoveStart(blackToMove);
-      
+
       // Reset half move offset
       setHalfMoveOffset(0);
     } else {
       setIsBlackToMoveStart(false);
       setHalfMoveOffset(0);
     }
-    
+
     setGame(newGame);
-    
+
     // Parse metadata from the event
     parseEventMetadata(currentEvent);
-    
+
     // Parse PGN moves
     parsePGN(currentEvent);
   };
@@ -97,28 +104,28 @@ function FEN({ event }) {
     } else {
       setEventTitle("");
     }
-    
+
     const whiteMatch = currentEvent.match(/\[White \"([^\"]+)\"\]/);
     if (whiteMatch && whiteMatch[1]) {
       setWhitePlayer(whiteMatch[1]);
     } else {
       setWhitePlayer("");
     }
-    
+
     const blackMatch = currentEvent.match(/\[Black \"([^\"]+)\"\]/);
     if (blackMatch && blackMatch[1]) {
       setBlackPlayer(blackMatch[1]);
     } else {
       setBlackPlayer("");
     }
-    
+
     const annotatorMatch = currentEvent.match(/\[Annotator \"([^\"]+)\"\]/);
     if (annotatorMatch && annotatorMatch[1]) {
       setAnnotator(annotatorMatch[1]);
     } else {
       setAnnotator("");
     }
-    
+
     const specificCommentMatch = currentEvent.replace(/\[[^\]]*\]/g, ""); // Remove all content inside square brackets
     setSpecificComment(specificCommentMatch);
   };
@@ -132,7 +139,7 @@ function FEN({ event }) {
         handleNextMove();
         setHasAutoMoved(true);
       }, 300); // Short delay to ensure board is ready
-      
+
       return () => clearTimeout(timer);
     }
   }, [isBlackToMoveStart, moves, hasAutoMoved]);
@@ -159,6 +166,9 @@ function FEN({ event }) {
 
   useEffect(() => {
     const handleKeyNavigation = (event) => {
+      // Don't handle arrow keys when variation prompt is showing
+      if (showVariationPrompt) return;
+
       if (event.key === "ArrowRight") {
         handleNextMove();
       } else if (event.key === "ArrowLeft") {
@@ -171,7 +181,12 @@ function FEN({ event }) {
     return () => {
       window.removeEventListener("keydown", handleKeyNavigation);
     };
-  }, [currentMoveIndex, isInVariation, currentVariationIndex]);
+  }, [
+    currentMoveIndex,
+    isInVariation,
+    currentVariationIndex,
+    showVariationPrompt,
+  ]);
 
   const resetHighlights = () => {
     setHighlightedSquares([]);
@@ -343,22 +358,26 @@ function FEN({ event }) {
       }
     }
 
-    // Apply variation move if specified
-    if (
-      variationIndex !== null &&
-      variations[index] &&
-      variations[index][variationIndex]
-    ) {
-      try {
-        newGame.move(variations[index][variationIndex].san);
-        setCurrentVariationIndex(variationIndex);
-        setIsInVariation(true);
-      } catch (e) {
-        console.error(`Error making variation move:`, e);
-        setCurrentVariationIndex(null);
-        setIsInVariation(false);
+    // If we're in a variation, we need to play all moves in that variation
+    // up to the requested variationIndex
+    if (variationIndex !== null && variations[index]) {
+      setIsInVariation(true);
+      setCurrentVariationIndex(variationIndex);
+
+      // Play all moves in the variation up to the specified variationIndex
+      for (
+        let i = 0;
+        i <= variationIndex && i < variations[index].length;
+        i++
+      ) {
+        try {
+          newGame.move(variations[index][i].san);
+        } catch (e) {
+          console.error(`Error making variation move at index ${i}:`, e);
+        }
       }
     } else {
+      // If we're supposed to be in the mainline, clear variation state
       setCurrentVariationIndex(null);
       setIsInVariation(false);
     }
@@ -367,37 +386,93 @@ function FEN({ event }) {
     setCurrentMoveIndex(index);
   };
 
+  // Handle user choice for variation prompt
+  const handleVariationChoice = (enterVariation) => {
+    setShowVariationPrompt(false);
+
+    if (enterVariation) {
+      // Enter the variation
+      setIsInVariation(true);
+      setCurrentVariationIndex(0);
+      navigateToMove(pendingVariationIndex, 0);
+    } else {
+      // Continue with mainline
+      navigateToMove(pendingVariationIndex + 1);
+    }
+
+    // Reset pending index
+    setPendingVariationIndex(null);
+  };
+
   const handlePreviousMove = () => {
-    if (
-      isInVariation &&
-      currentVariationIndex !== null &&
-      currentVariationIndex > 0
-    ) {
-      // Move back within the variation
-      navigateToMove(currentMoveIndex, currentVariationIndex - 1);
-    } else if (isInVariation && currentVariationIndex === 0) {
-      // Exit variation and go back to mainline
-      navigateToMove(currentMoveIndex);
-    } else if (!isInVariation && currentMoveIndex > 0) {
+    if (isInVariation) {
+      if (currentVariationIndex > 0) {
+        // Move back within the variation
+        navigateToMove(currentMoveIndex, currentVariationIndex - 1);
+      } else {
+        // Exit variation and go back to mainline position
+        setIsInVariation(false);
+        setCurrentVariationIndex(null);
+        navigateToMove(currentMoveIndex);
+      }
+    } else if (currentMoveIndex > 0) {
       // Move back in the mainline
       navigateToMove(currentMoveIndex - 1);
     }
   };
 
   const handleNextMove = () => {
-    if (isInVariation && variations[currentMoveIndex]) {
-      if (currentVariationIndex + 1 < variations[currentMoveIndex].length) {
+    // Don't proceed if there's a pending variation prompt
+    if (showVariationPrompt) return;
+
+    if (isInVariation) {
+      if (
+        variations[currentMoveIndex] &&
+        currentVariationIndex < variations[currentMoveIndex].length - 1
+      ) {
         // Move forward within the variation
         navigateToMove(currentMoveIndex, currentVariationIndex + 1);
-        return;
       } else {
-        // At the end of variation, go to next mainline move
-        navigateToMove(currentMoveIndex + 1);
-        return;
+        // At the end of variation, go to next mainline move if available
+        if (currentMoveIndex + 1 < moves.length) {
+          setIsInVariation(false);
+          setCurrentVariationIndex(null);
+          navigateToMove(currentMoveIndex + 1);
+        }
       }
-    }
+    } else if (currentMoveIndex < moves.length) {
+      // Check if there are variations at this position we should enter
+      if (
+        variations[currentMoveIndex] &&
+        variations[currentMoveIndex].length > 0
+      ) {
+        // Check if we're at the right position to enter a variation
+        const expectedPosition = new Chess();
+        // Replay moves to get expected position
+        const fen = event.match(/FEN \"([^\"]+)\"/)?.[1];
+        if (fen) {
+          expectedPosition.load(fen);
+        }
 
-    if (!isInVariation && currentMoveIndex < moves.length) {
+        let skipFirst = isBlackToMoveStart ? 1 : 0;
+        for (let i = skipFirst; i < currentMoveIndex && i < moves.length; i++) {
+          if (moves[i].san !== "...") {
+            try {
+              expectedPosition.move(moves[i].san);
+            } catch (e) {
+              console.error(`Error calculating position at index ${i}:`, e);
+            }
+          }
+        }
+
+        // If we're at the right position, show the variation prompt
+        if (game.fen() === expectedPosition.fen()) {
+          setShowVariationPrompt(true);
+          setPendingVariationIndex(currentMoveIndex);
+          return;
+        }
+      }
+
       // Move forward in the mainline
       navigateToMove(currentMoveIndex + 1);
     }
@@ -508,14 +583,12 @@ function FEN({ event }) {
                   fontWeight: "bold",
                   color: "black",
                 }}
-                key={eventKey} // Add key to force re-render on event change
+                key={eventKey}
               />
             </div>
           )}
         </div>
         <div className="flex-1 p-4 relative">
-          {" "}
-          {/* Add relative position */}
           <div className="p-4 border rounded-lg bg-gray-100 h-full">
             <h4 className="font-semibold text-xl text-blue-600 select-none">
               Event Details:
@@ -532,8 +605,8 @@ function FEN({ event }) {
               </pre>
             )}
             <h4 className="font-semibold text-lg mt-4">Moves:</h4>
-            
-            {movesVisible && ( // Conditionally render moves based on movesVisible state
+
+            {movesVisible && (
               <pre className="whitespace-pre-wrap text-gray-700 font-semibold break-words m-0 p-0 leading-tight mt-4 overflow-x-scroll max-w-[630px]">
                 {moves.map((move, index) => {
                   // Determine proper move number based on actual half-moves
@@ -583,6 +656,35 @@ function FEN({ event }) {
               </pre>
             )}
           </div>
+          {/* Variation Prompt Dialog */}
+          {showVariationPrompt && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl border border-blue-500 w-96 transform transition-all scale-100 animate-fade-in">
+                <h3 className="text-xl font-semibold text-blue-700 text-center mb-4">
+                  Variation Found
+                </h3>
+                <p className="text-gray-700 text-center mb-6">
+                  Do you want to explore this variation or continue with the
+                  mainline?
+                </p>
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={() => handleVariationChoice(true)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 shadow-md"
+                  >
+                    Enter Variation
+                  </button>
+                  <button
+                    onClick={() => handleVariationChoice(false)}
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 shadow-md"
+                  >
+                    Stay on Mainline
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Buttons Container */}
           <div className="absolute bottom-4 left-8 right-0 flex gap-2 mb-2">
             <button
@@ -606,7 +708,7 @@ function FEN({ event }) {
             <button
               onClick={() => {
                 setQuestionVisible(!questionVisible);
-                setMovesVisible(!movesVisible); // Toggle moves visibility when hiding/showing event
+                setMovesVisible(!movesVisible);
               }}
               className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition duration-200"
             >
@@ -616,6 +718,7 @@ function FEN({ event }) {
             <button
               onClick={handlePreviousMove}
               className="p-3 rounded-full text-lg bg-slate-400 hover:bg-blue-200 duration-100"
+              disabled={showVariationPrompt}
             >
               <HiArrowSmLeft />
             </button>
@@ -623,6 +726,7 @@ function FEN({ event }) {
             <button
               onClick={handleNextMove}
               className="p-3 rounded-full text-lg bg-slate-400 hover:bg-blue-200 duration-100"
+              disabled={showVariationPrompt}
             >
               <HiArrowSmRight />
             </button>

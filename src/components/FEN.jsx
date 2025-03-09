@@ -589,7 +589,7 @@ function FEN({ event }) {
           )}
         </div>
         <div className="flex-1 p-4 relative">
-          <div className="p-4 border rounded-lg bg-gray-100 h-full">
+          <div className="p-4 border rounded-lg bg-gray-100 h-full overflow-y-scroll max-h-[650px]">
             <h4 className="font-semibold text-xl text-blue-600 select-none">
               Event Details:
             </h4>
@@ -686,7 +686,7 @@ function FEN({ event }) {
           )}
 
           {/* Buttons Container */}
-          <div className="absolute bottom-4 left-8 right-0 flex gap-2 mb-2">
+          <div className="absolute bottom-1 left-8 right-0 flex gap-2 mb-2">
             <button
               onClick={resetHighlights}
               className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition duration-200"

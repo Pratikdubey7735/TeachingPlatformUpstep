@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const mockUsers = [
-  { email: "Pratik@gmail.com", password: "Upstep123" },
-  { email: "Vinay@gmail.com", password: "Upstep2023" },
-  { email: "Aayam@gmail.com", password: "Upstep2024" },
-  { email: "Upstep_Coach1@gmail.com", password: "Upstep2025" },
-  { email: "Upstep_Coach2@gmail.com", password: "Upstep2025" },
+  { user: "Pratik", password: "Upstep123" },
+  { user: "Vinay", password: "Upstep2023" },
+  { user: "Aayam", password: "Upstep2024" },
+  { user: "Upstep_Coach1", password: "Upstep2025" },
+  { user: "Upstep_Coach2", password: "Upstep2025" },
 ];
 
 export default function LoginForm() {
@@ -33,14 +33,14 @@ export default function LoginForm() {
     // Simulate a delay for login process
     setTimeout(() => {
       const userExists = mockUsers.find(
-        (user) => user.email === email && user.password === password
+        (user) => user.user === user && user.password === password
       );
 
       if (userExists) {
-        login(userExists.email); // Call login from context
+        login(userExists.user); // Call login from context
         navigate("/dashboard"); // Redirect to the dashboard
       } else {
-        setErrorMessage("Invalid email or password");
+        setErrorMessage("Invalid User ID or password");
       }
       setIsLoading(false);
     }, 1000); // Simulating 1-second delay
@@ -75,15 +75,15 @@ export default function LoginForm() {
           ) : (
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="flex flex-col">
-                <label htmlFor="email" className="text-sm font-semibold text-gray-900">
-                  Email
+                <label htmlFor="user" className="text-sm font-semibold text-gray-900">
+                  User ID
                 </label>
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  name="user"
+                  placeholder="Enter your Userid"
+                  value={user}
+                  onChange={(e) => setUser(e.target.value)}
                   className="mt-2 p-3 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 ease-in-out"
                   required
                 />

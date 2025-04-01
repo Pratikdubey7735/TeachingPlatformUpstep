@@ -3,15 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const mockUsers = [
-  { user: "Pratik", password: "Upstep123" },
-  { user: "Vinay", password: "Upstep2023" },
-  { user: "Aayam", password: "Upstep2024" },
-  { user: "Upstep_Coach1", password: "Upstep2025" },
-  { user: "Upstep_Coach2", password: "Upstep2025" },
+  { username: "Pratik", password: "Upstep123" },
+  { username: "Vinay", password: "Upstep2023" },
+  { username: "Aayam", password: "Upstep2024" },
+  { username: "Upstep_Coach1", password: "Upstep2025" },
+  { username: "Upstep_Coach2", password: "Upstep2025" },
 ];
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -33,14 +33,14 @@ export default function LoginForm() {
     // Simulate a delay for login process
     setTimeout(() => {
       const userExists = mockUsers.find(
-        (user) => user.user === user && user.password === password
+        (user) => user.username === username && user.password === password
       );
 
       if (userExists) {
-        login(userExists.user); // Call login from context
+        login(userExists.username); // Call login from context
         navigate("/dashboard"); // Redirect to the dashboard
       } else {
-        setErrorMessage("Invalid User ID or password");
+        setErrorMessage("Invalid Username or password");
       }
       setIsLoading(false);
     }, 1000); // Simulating 1-second delay
@@ -75,15 +75,15 @@ export default function LoginForm() {
           ) : (
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="flex flex-col">
-                <label htmlFor="user" className="text-sm font-semibold text-gray-900">
-                  User ID
+                <label htmlFor="username" className="text-sm font-semibold text-gray-900">
+                  Username
                 </label>
                 <input
                   type="text"
-                  name="user"
-                  placeholder="Enter your Userid"
-                  value={user}
-                  onChange={(e) => setUser(e.target.value)}
+                  name="username"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="mt-2 p-3 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 ease-in-out"
                   required
                 />

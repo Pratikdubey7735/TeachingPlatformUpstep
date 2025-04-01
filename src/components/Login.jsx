@@ -6,6 +6,8 @@ const mockUsers = [
   { email: "Pratik@gmail.com", password: "Upstep123" },
   { email: "Vinay@gmail.com", password: "Upstep2023" },
   { email: "Aayam@gmail.com", password: "Upstep2024" },
+  { email: "Upstep_Coach1@gmail.com", password: "Upstep2025" },
+  { email: "Upstep_Coach2@gmail.com", password: "Upstep2025" },
 ];
 
 export default function LoginForm() {

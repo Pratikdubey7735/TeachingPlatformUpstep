@@ -1,7 +1,16 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import FEN from "./FEN";
-import NOTFEN from "./NOTFEN";
+
+// Lazy load components
+const FEN = lazy(() => import("./FEN"));
+const NOTFEN = lazy(() => import("./NOTFEN"));
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+  </div>
+);
 
 const Upload = () => {
   const [pgnFiles, setPgnFiles] = useState([]);
@@ -12,66 +21,119 @@ const Upload = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState("");
   const [expandedLevel, setExpandedLevel] = useState(null);
-  const [category, setCategory] = useState("Foundation"); // New state for category selection
+  const [category, setCategory] = useState("Beginner");
+  const [isLoading, setIsLoading] = useState(false);
+  const [fileCache, setFileCache] = useState({});
+  const [eventCache, setEventCache] = useState({});
 
   const navigate = useNavigate();
 
+  // Fetch files with caching and abort controller
   useEffect(() => {
-    if (level) {
-      console.log(`Fetching PGN files from:https://backendteachingplatform.onrender.com/api/pgn-files?level=${level}`);
-      fetch(`https://backendteachingplatform.onrender.com/api/pgn-files?level=${level}`)
-        .then((response) => response.json())
-        .then((data) => {
-          if (Array.isArray(data)) {
-            setPgnFiles(data);
-          } else {
-            console.error("Expected an array from the response:", data);
-            setPgnFiles([]);
-          }
-        })
-        .catch((error) => {
+    if (!level) return;
+
+    // Check cache first
+    if (fileCache[level]) {
+      setPgnFiles(fileCache[level]);
+      return;
+    }
+
+    // Setup abort controller for cleanup
+    const controller = new AbortController();
+    const signal = controller.signal;
+    
+    setIsLoading(true);
+    
+    console.log(`Fetching PGN files from: https://backendteachingplatform.onrender.com/api/pgn-files?level=${level}`);
+    fetch(`https://backendteachingplatform.onrender.com/api/pgn-files?level=${level}`, { signal })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setPgnFiles(data);
+          // Update cache
+          setFileCache(prev => ({...prev, [level]: data}));
+        } else {
+          console.error("Expected an array from the response:", data);
+          setPgnFiles([]);
+        }
+      })
+      .catch((error) => {
+        if (error.name !== 'AbortError') {
           console.error("Error fetching PGN files:", error);
           setPgnFiles([]);
-        });
-    }
-  }, [level]);
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+
+    // Cleanup function to abort fetch on unmount or level change
+    return () => controller.abort();
+  }, [level, fileCache]);
 
   const goToDemo = () => {
-    navigate("/demo"); // Navigate to DEMO component
+    navigate("/demo");
   };
 
-  const handleFileSelect = (event) => {
+  const handleFileSelect = useCallback((event) => {
     const selectedUrl = event.target.value;
     setSelectedFile(selectedUrl);
 
+    if (!selectedUrl) return;
+
+    // Check cache for this file
+    if (eventCache[selectedUrl]) {
+      setEvents(eventCache[selectedUrl]);
+      setCurrentIndex(0);
+      return;
+    }
+
+    setIsLoading(true);
+    
     fetch(selectedUrl)
-      .then((response) => response.text())
-      .then((content) => parsePGN(content))
-      .catch((error) => console.error("Error loading PGN file:", error));
-  };
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+      })
+      .then((content) => {
+        const parsedEvents = parsePGN(content);
+        setEvents(parsedEvents);
+        setCurrentIndex(0);
+        // Cache the parsed events
+        setEventCache(prev => ({...prev, [selectedUrl]: parsedEvents}));
+      })
+      .catch((error) => {
+        console.error("Error loading PGN file:", error);
+        setEvents([]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [eventCache]);
 
   const parsePGN = (content) => {
-    const regex = /(?=\[Event\s)/g; // Matches the start of each PGN game by detecting '[Event '.
-  
-    const eventList = content
-      .split(regex) // Splits the content whenever '[Event ' is detected.
-      .filter((event) => event.trim()) // Removes empty or whitespace-only entries.
-      .map((event) => event.trim()); // Trims each event string.
-  
-    setEvents(eventList);
-    setCurrentIndex(0);
+    const regex = /(?=\[Event\s)/g;
+    return content
+      .split(regex)
+      .filter((event) => event.trim())
+      .map((event) => event.trim());
   };
-  
 
-  const handleLevelSelect = (selectedLevel, label) => {
+  const handleLevelSelect = useCallback((selectedLevel, label) => {
     setLevel(selectedLevel);
     setSelectedLabel(label);
     setSelectedFile("");
     setEvents([]);
     setCurrentIndex(0);
-    setPgnFiles([]);
     setExpandedLevel(null); // Close dropdown on selection
-  };
+  }, []);
 
   const levels = {
     BeginnerClasswork: [{ value: "BeginnerClassworkPGN", label: "Classwork" }],
@@ -82,9 +144,7 @@ const Upload = () => {
     IntermediateHomework: [{ value: "InterHome", label: "Homework" }],
     AdvancedPart1Classwork: [{ value: "AdvanPart1Class", label: "Classwork" }],
     AdvancedPart1Homework: [{ value: "AdvanPart1Home", label: "Homework" }],
-    AdvancedPart2Classwork: [
-      { value: "AdvancePart2Class", label: "Classwork" },
-    ],
+    AdvancedPart2Classwork: [{ value: "AdvancePart2Class", label: "Classwork" }],
     AdvancedPart2Homework: [{ value: "AdvPart2Home", label: "Homework" }],
     Junior_Classwork: [
       { value: "Jr1C", label: "Jr1" },
@@ -140,7 +200,7 @@ const Upload = () => {
       { value: "Sr9C", label: "Sr9" },
       { value: "Sr10C", label: "Sr10" },
       { value: "Sr11C", label: "Sr11" },
-      { value: "Sr12C", label: "Sr11" },
+      { value: "Sr12C", label: "Sr12" }, // Fixed typo from Sr11 to Sr12
     ],
     Senior_Part2_Homework: [
       { value: "Sr7H", label: "Sr7" },
@@ -148,36 +208,33 @@ const Upload = () => {
       { value: "Sr9H", label: "Sr9" },
       { value: "Sr10H", label: "Sr10" },
       { value: "Sr11H", label: "Sr11" },
-      { value: "Sr12H", label: "Sr11" },
+      { value: "Sr12H", label: "Sr12" }, // Fixed typo from Sr11 to Sr12
     ],
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
-  };
+  }, []);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, events.length - 1));
-  };
+  }, [events.length]);
 
-  const handleKeyDown = useCallback(
-    (event) => {
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        event.preventDefault(); // Prevent scrolling
-        if (event.key === "ArrowUp") {
-          setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
-        } else if (event.key === "ArrowDown") {
-          setCurrentIndex((prevIndex) =>
-            Math.min(prevIndex + 1, events.length - 1)
-          );
-        }
-      } else if (event.key === "Escape") {
-        setIsFullscreen(false);
+  const handleKeyDown = useCallback((event) => {
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault(); // Prevent scrolling
+      if (event.key === "ArrowUp") {
+        handlePrevious();
+      } else if (event.key === "ArrowDown") {
+        handleNext();
+      }
+    } else if (event.key === "Escape") {
+      setIsFullscreen(false);
+      if (document.exitFullscreen) {
         document.exitFullscreen().catch((err) => console.error(err));
       }
-    },
-    [events.length]
-  );
+    }
+  }, [handleNext, handlePrevious]);
 
   useEffect(() => {
     if (isFullscreen) {
@@ -190,21 +247,22 @@ const Upload = () => {
     };
   }, [isFullscreen, handleKeyDown]);
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!isFullscreen) {
       document.documentElement
         .requestFullscreen()
+        .then(() => setIsFullscreen(true))
         .catch((err) => console.error(err));
-      setIsFullscreen(true);
     } else {
-      setIsFullscreen(false);
-      document.exitFullscreen().catch((err) => console.error(err));
+      document.exitFullscreen()
+        .then(() => setIsFullscreen(false))
+        .catch((err) => console.error(err));
     }
-  };
+  }, [isFullscreen]);
 
-  // Filter levels based on the category selected (Foundation, Masters, or Senior)
-  const filteredLevels =
-    category === "Beginner"
+  // Memoize the filtered levels calculation
+  const filteredLevels = React.useMemo(() => {
+    return category === "Beginner"
       ? ["BeginnerClasswork", "BeginnerHomework"]
       : category === "AdvancedBeginner"
       ? ["AdvancedBeginnerClasswork", "AdvancedBeginnerHomework"]
@@ -215,12 +273,64 @@ const Upload = () => {
       : category === "AdvancedPart2"
       ? ["AdvancedPart2Classwork", "AdvancedPart2Homework"]
       : category === "Junior"
-      ? ["Junior_Classwork", "Junior_Homework"] // Only Junior levels for Masters
+      ? ["Junior_Classwork", "Junior_Homework"] 
       : category === "SubJunior"
       ? ["Sub_Junior_Classwork", "Sub_Junior_Homework"]
       : category === "SeniorPart2"
       ? ["Senior_Part2_Classwork", "Senior_Part2_Homework"]
-      : ["Senior_Part1_Classwork", "Senior_Part1_Homework"]; // Senior levels for Senior category
+      : ["Senior_Part1_Classwork", "Senior_Part1_Homework"];
+  }, [category]);
+
+  // Prefetch category data when hovering over category buttons
+  const handleCategoryHover = useCallback((cat) => {
+    const levelsForCategory = 
+      cat === "Beginner"
+        ? ["BeginnerClasswork", "BeginnerHomework"]
+        : cat === "AdvancedBeginner"
+        ? ["AdvancedBeginnerClasswork", "AdvancedBeginnerHomework"]
+        : cat === "Intermediate"
+        ? ["IntermediateClasswork", "IntermediateHomework"]
+        : cat === "AdvancedPart1"
+        ? ["AdvancedPart1Classwork", "AdvancedPart1Homework"]
+        : cat === "AdvancedPart2"
+        ? ["AdvancedPart2Classwork", "AdvancedPart2Homework"]
+        : cat === "Junior"
+        ? ["Junior_Classwork", "Junior_Homework"] 
+        : cat === "SubJunior"
+        ? ["Sub_Junior_Classwork", "Sub_Junior_Homework"]
+        : cat === "SeniorPart2"
+        ? ["Senior_Part2_Classwork", "Senior_Part2_Homework"]
+        : ["Senior_Part1_Classwork", "Senior_Part1_Homework"];
+    
+    // For each level in this category, look at the first option
+    levelsForCategory.forEach(levelName => {
+      const levelOptions = levels[levelName] || [];
+      if (levelOptions.length > 0) {
+        const value = levelOptions[0].value;
+        
+        // If we don't have this level cached, prefetch it
+        if (!fileCache[value]) {
+          const prefetchController = new AbortController();
+          
+          // Low priority fetch that can be aborted
+          fetch(`https://backendteachingplatform.onrender.com/api/pgn-files?level=${value}`, 
+            { signal: prefetchController.signal })
+            .then(response => response.json())
+            .then(data => {
+              if (Array.isArray(data)) {
+                setFileCache(prev => ({...prev, [value]: data}));
+              }
+            })
+            .catch(() => {
+              // Ignore prefetch errors
+            });
+            
+          // Abort prefetch after 5 seconds if not completed
+          setTimeout(() => prefetchController.abort(), 5000);
+        }
+      }
+    });
+  }, [fileCache, levels]);
 
   return (
     <div
@@ -231,12 +341,15 @@ const Upload = () => {
       {isFullscreen ? (
         <div className="flex flex-col items-center justify-center h-screen">
           <div className="bg-white p-6 rounded-lg shadow-lg mb-6 w-full h-full flex items-center justify-center">
-            {events[currentIndex] &&
-              (events[currentIndex].includes("FEN") ? (
-                <FEN event={events[currentIndex]} />
-              ) : (
-                <NOTFEN event={events[currentIndex]} />
-              ))}
+            {events[currentIndex] && (
+              <Suspense fallback={<LoadingSpinner />}>
+                {events[currentIndex].includes("FEN") ? (
+                  <FEN event={events[currentIndex]} />
+                ) : (
+                  <NOTFEN event={events[currentIndex]} />
+                )}
+              </Suspense>
+            )}
           </div>
         </div>
       ) : (
@@ -245,7 +358,7 @@ const Upload = () => {
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">
               Select Category
             </h2>
-            <div className="flex gap-4 mb-4">
+            <div className="flex flex-wrap gap-4 mb-4">
               {[
                 "Beginner",
                 "AdvancedBeginner",
@@ -258,23 +371,23 @@ const Upload = () => {
                 "SeniorPart2",
               ].map((cat) => (
                 <a
-                  href={`/category/${cat}`} // Link for right-click functionality
+                  href={`/category/${cat}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   key={cat}
                   onClick={(e) => {
-                    e.preventDefault(); // Prevent default for left click
-                    setCategory(cat); // Call your left-click function
+                    e.preventDefault();
+                    setCategory(cat);
                   }}
+                  onMouseEnter={() => handleCategoryHover(cat)}
                   onContextMenu={(e) => {
-                    // Allows right-click to work as a link (open in new tab)
-                    e.stopPropagation(); // Prevent interference with other right-click actions
+                    e.stopPropagation();
                   }}
                   className={`w-40 p-3 bg-gray-800 text-white rounded-md shadow-md transition-transform duration-200 ease-in-out hover:bg-green-600 focus:outline-none focus:ring focus:ring-pink-300 ${
                     category === cat ? "bg-green-500" : ""
                   }`}
                 >
-                  {cat.replace(/([A-Z])/g, " $1")} {/* Format category name */}
+                  {cat.replace(/([A-Z])/g, " $1")}
                 </a>
               ))}
             </div>
@@ -284,7 +397,7 @@ const Upload = () => {
             </h2>
             <div className="flex flex-wrap gap-4 mb-4">
               {filteredLevels.map((levelName) => {
-                const levelOptions = levels[levelName] || []; // Default to an empty array if undefined
+                const levelOptions = levels[levelName] || [];
                 return (
                   <div key={levelName} className="relative">
                     <a
@@ -293,14 +406,13 @@ const Upload = () => {
                         selectedLabel.includes(levelName) ? "bg-green-500" : ""
                       }`}
                       onClick={(e) => {
-                        e.preventDefault(); // Prevent default link behavior for left click
+                        e.preventDefault();
                         setExpandedLevel(
                           expandedLevel === levelName ? null : levelName
                         );
                       }}
                       onContextMenu={(e) => {
-                        // Allows right-click to work as a link (open in new tab)
-                        e.stopPropagation(); // Prevents other right-click actions if any
+                        e.stopPropagation();
                       }}
                     >
                       {levelName}
@@ -309,11 +421,11 @@ const Upload = () => {
                       <div className="absolute bg-white border border-gray-300 rounded-md shadow-lg z-10 mt-1 w-full">
                         {levelOptions.map(({ value, label }) => (
                           <a
-                            href={`/level/${value}`} // Link for right-click functionality
+                            href={`/level/${value}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => {
-                              e.preventDefault(); // Prevent default for left-click
+                              e.preventDefault();
                               handleLevelSelect(
                                 value,
                                 `${levelName} - ${label}`
@@ -335,64 +447,89 @@ const Upload = () => {
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">
               Select Chapter
             </h2>
-            <select
-              onChange={handleFileSelect}
-              value={selectedFile}
-              className="w-full p-3 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring focus:ring-blue-300"
-              disabled={!pgnFiles.length}
-            >
-              <option value="">-- Select a PGN File --</option>
-              {pgnFiles.map((file) => (
-                <option key={file.filename} value={file.url}>
-                  {file.filename}
-                </option>
-              ))}
-            </select>
-
-            <div className="mb-6 w-full">
-              {events[currentIndex] &&
-                (events[currentIndex].includes("FEN") ? (
-                  <FEN event={events[currentIndex]} />
-                ) : (
-                  <NOTFEN event={events[currentIndex]} />
+            {isLoading && level && !pgnFiles.length ? (
+              <LoadingSpinner />
+            ) : (
+              <select
+                onChange={handleFileSelect}
+                value={selectedFile}
+                className="w-full p-3 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring focus:ring-blue-300"
+                disabled={!pgnFiles.length}
+              >
+                <option value="">-- Select a PGN File --</option>
+                {pgnFiles.map((file) => (
+                  <option key={file.filename} value={file.url}>
+                    {file.filename}
+                  </option>
                 ))}
+              </select>
+            )}
+
+            <div className="mb-6 w-full min-h-64">
+              {isLoading && selectedFile && !events.length ? (
+                <LoadingSpinner />
+              ) : (
+                events[currentIndex] && (
+                  <Suspense fallback={<LoadingSpinner />}>
+                    {events[currentIndex].includes("FEN") ? (
+                      <FEN event={events[currentIndex]} />
+                    ) : (
+                      <NOTFEN event={events[currentIndex]} />
+                    )}
+                  </Suspense>
+                )
+              )}
             </div>
           </div>
         </div>
       )}
 
       {!isFullscreen && (
-        <>
+        <div className="flex flex-wrap gap-4">
           <button
             onClick={toggleFullscreen}
             className="mt-4 p-3 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-300"
           >
             Enter Fullscreen
           </button>
-        </>
+          <button
+            onClick={goToDemo}
+            className="mt-4 p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
+          >
+            DEMO
+          </button>
+        </div>
       )}
 
-      <button
-        onClick={goToDemo}
-        className="mt-4 ml-4 p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
-      >
-        DEMO
-      </button>
-      <div className="flex flex-row gap-4 fixed bottom-16 right-20">
-            <button
-              onClick={handlePrevious}
-              className="p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
-            >
-              Previous
-            </button>
-            <button
-              onClick={handleNext}
-              className="p-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"
-            >
-              Next
-            </button>
-          </div>
+      {events.length > 0 && (
+        <div className="flex flex-row gap-4 fixed bottom-16 right-20">
+          <button
+            onClick={handlePrevious}
+            disabled={currentIndex === 0}
+            className={`p-3 rounded-md ${
+              currentIndex === 0
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            } text-white focus:outline-none focus:ring focus:ring-blue-300`}
+          >
+            Previous
+          </button>
+          
+          <button
+            onClick={handleNext}
+            disabled={currentIndex === events.length - 1}
+            className={`p-3 rounded-md ${
+              currentIndex === events.length - 1
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            } text-white focus:outline-none focus:ring focus:ring-blue-300`}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
+
 export default Upload;
